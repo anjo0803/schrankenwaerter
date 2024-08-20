@@ -9,8 +9,11 @@ Sounds samt Zeitpuffern dazwischen!
 
 ### Einbinden des Skripts
 Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie einfach
-den Inhalt der Datei `schrankenwaerter.lua` in das Lua-Skript Ihrer Anlage. Zur
-einfachen späteren Identifizierung befindet sich das komplette
+den Inhalt der Datei `schrankenwaerter.lua` in das Lua-Skript Ihrer Anlage.
+Fügen Sie bitte außerdem einen Aufruf der Funktion `SW.main()` in ihre
+`EEPMain()`-Funktion ein, damit der `SW.wait`-Befehl funktioniert.
+
+Zur einfachen späteren Identifizierung befindet sich das komplette
 Schrankenwärter-Skript zwischen den beiden Kommentar-Blöcken "SCHRANKENWAERTER
 START" und "SCHRANKENWAERTER ENDE".
 
@@ -90,6 +93,20 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 }
 ```
 
+### Kontaktpunkte
+Nachdem die gewünschten BÜs definiert wurden, sind natürlich noch entsprechende
+Kontaktpunkte zu erstellen. Darin haben Sie für die aufzurufende Lua-Funktion
+zwei Möglichkeiten:
+
+- Mittels "Bennys Codezeile" sollte es möglich, das Schrankenwärter-Skript
+  direkt aufzurufen, indem Sie `SW.crossingClose(bue_id)` eintragen (und
+  `bue_id` durch die von Ihnen für den BÜ gewählte `ID` ersetzen).
+- Alternativ können Sie selbstverständlich eine eigene Funktion definieren, die
+  dann ihrerseits `SW.crossingClose(bue_id)` aufruft, und diese eintragen.
+
+Für den BÜ wieder freigebende Kontaktpunkte muss nur sinngemäß die Funktion
+`SW.crossingOpen(bue_id)` aufgerufen werden.
+
 ### Lizenz
 [Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
 
@@ -101,9 +118,12 @@ buffers in between!
 
 ### Using the script
 To use the Schrankenwaerter script in your railroad system, simply copy the
-file contents of `schrankenwaerter.lua` to your system's lua script. For easy
-identification of the Schrankenwaerter script later on, its entirety is
-contained between the two comment blocks "SCHRANKENWAERTER START" and
+file contents of `schrankenwaerter.lua` to your system's lua script. Please
+also add a call to the `SW.main()` function into your `EEPMain()` function in
+order to enable functionality of the `SW.wait` command.
+
+For easy identification of the Schrankenwaerter script later on, its entirety
+is contained between the two comment blocks "SCHRANKENWAERTER START" and
 "SCHRANKENWAERTER ENDE".
 
 ### Crossing setup
@@ -149,6 +169,20 @@ Currently, the script itself provides the following commands:
 
 #### Examples
 You can find example configurations [here](#beispiele).
+
+### Contact points
+Naturally, contact points corresponding to the defined railroad crossings still
+need to be set up after. There are two possibilities for the Lua function to
+call therein:
+
+- Using "Benny's Code Line", it should be possible to call the Schrankenwaerter
+  script directly via `SW.crossingClose(crossing_id)` (replacing `crossing_id`
+  with the `ID` you chose for the crossing).
+- Alternatively, you naturally can just define another function, which itself
+  calls `SW.crossingClose(crossing_id)`, and use that.
+
+In contact points that should open the crossing, simply call the
+`SW.crossingOpen(crossing_id)` function instead.
 
 ### Licence
 [Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
