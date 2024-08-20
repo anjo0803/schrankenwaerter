@@ -12,7 +12,6 @@ SW = { version = "1.0.0" }
 function SW.CROSSING_CONFIG() return {
 	-- BÜS HIER BESCHREIBEN // DESCRIBE CROSSINGS HERE
 	--[[ BÜ-Datenstruktur // Crossing Data Structure:
-		- name: string (optional)
 		- slot: string (optional)
 		- closing: {
 			- Liste von Befehlen, z.B. SW.signal(id, stellung)
@@ -67,7 +66,7 @@ function SW.init()
 	if SW.is_initialized then return end	-- Prevent multiple init calls
 
 	SW.crossings = SW.CROSSING_CONFIG()
-	for _, crossing in ipairs(SW.crossings) do
+	for _, crossing in pairs(SW.crossings) do
 		-- Move the declared opening and closing sequences to routines
 		crossing.routines = { crossing.closing, crossing.opening }
 

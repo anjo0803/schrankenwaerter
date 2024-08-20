@@ -14,7 +14,7 @@ einfachen späteren Identifizierung befindet sich das komplette
 Schrankenwärter-Skript zwischen den beiden Kommentar-Blöcken "SCHRANKENWAERTER
 START" und "SCHRANKENWAERTER ENDE".
 
-### Einrichten eines BÜs
+### Konfigurieren eines BÜs
 Ihre Bahnübergänge können Sie innerhalb des `return`-Werts der Funktion
 `SW.CROSSING_CONFIG` am Anfang des Schrankenwärter-Skripts beschreiben. Im
 Skript selbst weist ein weiterer Kommentar die richtige Stelle aus.
@@ -23,8 +23,7 @@ Skript selbst weist ein weiterer Kommentar die richtige Stelle aus.
 Damit das Skript Ihren BÜ korrekt handhaben kann, muss dieser in der folgenden
 Struktur beschrieben werden:
 ```lua
-{
-	name = "Mein BÜ",
+[ID] = {
 	slot = 1,
 	closing = {
 		-- Hierzu gleich mehr unter "Befehle"
@@ -34,25 +33,12 @@ Struktur beschrieben werden:
 	}
 }
 ```
-Das Feld "name" ist optional und dient lediglich dazu, dass Sie dem BÜ bei
-Bedarf zur leichteren Identifizierbarkeit im Code einen eigenen Namen geben
-können. Auch das Feld "slot" ist optional: Sie können darin dem BÜ einen der
+Das Feld "slot" ist dabei optional: Sie können darin dem BÜ einen der
 EEPSaveSlots zuweisen. Dieser wird dann genutzt, um die Anzahl der Züge zu
 speichern, die den BÜ momentan befahren, sodass diese Daten nicht beim Neuladen
-des Skripts oder der Anlage verloren gehen.
-
-**WICHTIG:** Alle BÜs, auch wenn nur ein einziger BÜ definiert wird, müssen
-jeweils innerhalb eigener geschweiften Klammern, d.h. nicht *direkt* innerhalb
-derer der `SW.CROSSING_CONFIG`-Funktion, beschrieben werden:
-```lua
-function SW.CROSSING_CONFIG() return {
-	{
-		closing = { },
-		opening = { }
-	},
-	-- Weitere BÜs können dann einfach angereiht werden
-}
-```
+des Skripts oder der Anlage verloren gehen. Die `ID` können Sie beliebig wählen
+(bspw `"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in
+diesem Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
 
 #### Befehle
 Die BÜ-Steuerung des Schrankenwärter-Skripts erfolgt durch "Befehle". Dem
@@ -129,7 +115,7 @@ correct spot is also marked by a comment within the script itself.
 In order for the script to correctly manage your crossing, it must be
 described in the following structure:
 ```lua
-{
+[ID] = {
 	name = "My Crossing",
 	slot = 1,
 	closing = {
@@ -140,25 +126,12 @@ described in the following structure:
 	}
 }
 ```
-The field "name" is optional and only serves to help you in identifying a
-crossing in the script more easily by naming it. The "slot" field likewise is
-optional: Within it, you may assign one of the EEPSaveSlots to the crossing.
-This will then be used to save the number of trains currently approaching the
-crossing, so that data isn't lost during reloads of the script or your whole
-railway system.
-
-**IMPORTANT:** All crossings, even if only a single crossing is registered, have
-to be set up within their own curly braces - that is, not *directly* within
-those enclosing the `SW.CROSSING_CONFIG` function's return value:
-```lua
-function SW.CROSSING_CONFIG() return {
-	{
-		closing = { },
-		opening = { }
-	},
-	-- More crossings can then be appended here
-}
-```
+The "slot" field is optional: Within it, you may assign one of the EEPSaveSlots
+to the crossing. This will then be used to save the number of trains currently
+approaching the crossing, so that data isn't lost during reloads of the script
+or your whole railway system. You are also free to choose the `ID` (e.g.
+`"crossing_example_st"` or just numerically `1`) or leave it out entirely, in
+which case Lua will automatically index it numerically.
 
 #### Commands
 Crossings are controlled by the Schrankenwaerter script via "commands". A list
