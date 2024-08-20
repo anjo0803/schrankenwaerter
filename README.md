@@ -105,7 +105,7 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 ```
 
 ### Lizenz
-[Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/master/LICENCE.txt)
+[Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
 
 ## English
 The **Schrankenwaerter** is a Lua script for controlling railroad crossings in
@@ -178,4 +178,4 @@ Currently, the script itself provides the following commands:
 You can find example configurations [here](#beispiele).
 
 ### Licence
-[Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/master/LICENCE.txt)
+[Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
