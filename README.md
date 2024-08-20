@@ -44,7 +44,7 @@ des Skripts oder der Anlage verloren gehen. Die `ID` können Sie beliebig wähle
 diesem Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
 
 #### Befehle
-Die BÜ-Steuerung des Schrankenwärter-Skripts erfolgt durch "Befehle". Dem
+Die BÜ-Steuerung des Schrankenwärter-Skripts erfolgt durch "Befehle". Den
 Schließungs- und Öffnungsvorgängen ist dabei jeweils eine Liste an Befehlen
 zugeordnet, die nacheinander ausgeführt werden. Dies kann beispielsweise der
 Befehl sein, ein bestimmtes Signal in eine definierte Stellung zu bringen oder
@@ -98,7 +98,7 @@ Nachdem die gewünschten BÜs definiert wurden, sind natürlich noch entsprechen
 Kontaktpunkte zu erstellen. Darin haben Sie für die aufzurufende Lua-Funktion
 zwei Möglichkeiten:
 
-- Mittels "Bennys Codezeile" sollte es möglich, das Schrankenwärter-Skript
+- Mittels "Bennys Codezeile" sollte es möglich sein, das Schrankenwärter-Skript
   direkt aufzurufen, indem Sie `SW.crossingClose(bue_id)` eintragen (und
   `bue_id` durch die von Ihnen für den BÜ gewählte `ID` ersetzen).
 - Alternativ können Sie selbstverständlich eine eigene Funktion definieren, die
