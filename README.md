@@ -8,12 +8,16 @@ komplexen Systemen aus vielen separaten Lichtzeichen, Schranken, Immobilien und
 Sounds samt Zeitpuffern dazwischen!
 
 ### Einbinden des Skripts
-Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie bitte
-zunächst die Datei 
+Um das Schrankenwärter-Skript zu installieren, können Sie einfach
+[hier](https://github.com/anjo0803/schrankenwaerter/releases) die neueste
+`Schrankenwaerter.zip`-Datei herunterladen und mittels des EEP-Modellinstallers
+installieren. Dies platziert automatisch das Schrankenwärter-Skript im
+"LUA"-Ordner ihrer EEP-Installation. Natürlich können Sie auch die Datei
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
-in den "LUA"-Ordner ihrer EEP-Installation, sodass diese für alle Anlagen
-sichtbar ist. Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript
-dann mittels der Lua-Funktion `require` aktivieren:
+direkt herunterladen und selbst direkt im "LUA"-Ordner platzieren.
+
+Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript dann mittels
+der Lua-Funktion `require` einbinden:
 ```lua
 SW = require("Schrankenwaerter")
 ```
@@ -27,7 +31,7 @@ end
 ```
 
 ### Konfigurieren eines BÜs
-Ihre Bahnübergänge können Sie nach Aktivierung des Schrankenwärter-Skripts mit
+Ihre Bahnübergänge können Sie nach Einbindung des Schrankenwärter-Skripts mit
 der Funktion `SW.setup` definieren:
 ```lua
 SW = require("Schrankenwaerter")
@@ -82,9 +86,10 @@ Nachdem die gewünschten BÜs definiert wurden, sind natürlich noch entsprechen
 Kontaktpunkte zu erstellen. Darin haben Sie für die aufzurufende Lua-Funktion
 zwei Möglichkeiten:
 
-- Mittels "Bennys Codezeile" sollte es möglich sein, das Schrankenwärter-Skript
-  direkt aufzurufen, indem Sie `SW.crossingClose(bue_id)` eintragen (und
-  `bue_id` durch die von Ihnen für den BÜ gewählte `ID` ersetzen).
+- Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) sollte
+  es möglich sein, das Schrankenwärter-Skript direkt aufzurufen, indem Sie
+  `SW.crossingClose(bue_id)` eintragen (und für `bue_id` die von Ihnen für den
+  BÜ zuvor gewählte `ID` einsetzen).
 - Alternativ können Sie selbstverständlich eine eigene Funktion definieren, die
   dann ihrerseits `SW.crossingClose(bue_id)` aufruft, und diese eintragen.
 
@@ -101,11 +106,17 @@ setups of many separate lights, barriers, structures, and sounds plus time
 buffers in between!
 
 ### Using the script
-To use the Schrankenwaerter script in your railroad system, please first copy
-the file
+To use the Schrankenwaerter script in your railroad system, you can simply
+download the latest version of `Schrankenwaerter.zip` from
+[here](https://github.com/anjo0803/schrankenwaerter/releases) and install it
+using the EEP Model Installer. This will automatically place the
+Schrankenwaerter script in the "LUA" folder of your EEP installation.
+Naturally, you can also download the
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
-to the "LUA" folder in the root of your EEP installation. You can then activate
-it in the Lua script of any railroad system using the Lua `require` function:
+file directly and place it in the "LUA" folder yourself.
+
+You can then integrate the Schrankenwaerter script into the Lua script of your
+railroad systems using the Lua `require` function:
 ```lua
 SW = require("Schrankenwaerter")
 ```
@@ -119,7 +130,7 @@ end
 ```
 
 ### Crossing setup
-After activating the Schrankenwaerter script, you can define your railroad
+After integrating the Schrankenwaerter script, you can define your railroad
 crossings using the `SW.setup` function:
 ```lua
 SW = require("Schrankenwaerter")
@@ -172,9 +183,10 @@ Naturally, contact points corresponding to the defined railroad crossings still
 need to be set up after. There are two possibilities for the Lua function to
 call therein:
 
-- Using "Benny's Code Line", it should be possible to call the Schrankenwaerter
-  script directly via `SW.crossingClose(crossing_id)` (replacing `crossing_id`
-  with the `ID` you chose for the crossing).
+- Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it
+  should be possible to call the Schrankenwaerter script directly via
+  `SW.crossingClose(crossing_id)` (replacing `crossing_id` with the `ID` you
+  chose for the crossing earlier).
 - Alternatively, you naturally can just define another function, which itself
   calls `SW.crossingClose(crossing_id)`, and use that.
 
