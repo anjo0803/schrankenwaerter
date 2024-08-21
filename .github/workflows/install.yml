@@ -8,6 +8,9 @@ jobs:
   zip:
     name: Create installer zip
 
+    permissions:
+      contents: write
+
     runs-on: windows-latest
     steps:
       - name: Checkout Repository
@@ -45,20 +48,9 @@ jobs:
         run: copy Schrankenwaerter.lua Install_00\
 
       - name: Zip files
-        uses: vimtor/action-zip@v1.2
-        with:
-          files: Installation.eep Install_00/
-          dest: Installable.zip
+        shell: cmd
+        run: 7z a -tzip Installable.zip Installation.eep Install_00
 
-  attach:
-    name: Attach installer to release
-    needs: zip
-
-    permissions:
-      contents: write
-
-    runs-on: windows-latest
-    steps:
       - name: Attach zip
         uses: svenstaro/upload-release-action@v2
         with:
