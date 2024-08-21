@@ -5,9 +5,26 @@ local SW = {
 	crossings = {}
 }
 
+-- Crossing Type Definition
+
+---@class RailroadCrossing
+---@field slot integer: User-set ID of the EEP save slot for the crossing.
+---@field opening function[]: User-set list of functions to call when opening.
+---@field closing function[]: User-set list of functions to call when closing.
+---@field routines function[][]: (internal) Just contains the opening/closing.
+---@field rundata Rundata: (internal) Current state of the crossing.
+
+---Data on a railroad crossing's current state.
+---@class Rundata
+---@field trains integer: Number of trains currently approaching the crossing.
+---@field sleep integer: Number of Lua cycles the crossing is still paused for.
+---@field routine function[]: Functions left to call in the active routine.
 
 -- Crossing Actions
 
+---Pauses a crossing's routine for the given number of Lua cycles.
+---@param duration integer: Number of Lua cycles to wait.
+---@return function: Function that will be called when executing the routine.
 function SW.wait(duration)
 	return function(crossing_id)
 		SW.crossings[crossing_id].rundata.sleep = duration
@@ -16,6 +33,10 @@ function SW.wait(duration)
 	end
 end
 
+---Set the given signal to the given position.
+---@param signal_id integer: ID of the target signal.
+---@param position integer: ID of the position to set the signal to.
+---@return function: Function that will be called when executing the routine.
 function SW.signal(signal_id, position)
 	if EEPVer < 10.2 then return function (_) end end
 	return function(_)
@@ -24,6 +45,11 @@ function SW.signal(signal_id, position)
 	end
 end
 
+---Move an axis on a structure.
+---@param immo_id string: Lua name of the target structure.
+---@param axis string: Name of the axis to move on the structure.
+---@param step integer: Number of steps to move the axis.
+---@return function: Function that will be called when executing the routine.
 function SW.immo(immo_id, axis, step)
 	if EEPVer < 11.1 then return function (_) end end
 	return function(_)
@@ -32,6 +58,10 @@ function SW.immo(immo_id, axis, step)
 	end
 end
 
+---Turns a given sound on or off.
+---@param sound_id string: Lua name of the target sound.
+---@param turn_on boolean: `true` to turn the sound on, `false` to turn it off.
+---@return function: Function that will be called when executing the routine.
 function SW.sound(sound_id, turn_on)
 	if EEPVer < 13.1 then return function (_) end end
 	return function(_)
@@ -40,6 +70,9 @@ function SW.sound(sound_id, turn_on)
 	end
 end
 
+---Initializes the script with the given set of railroad crossing definitions,
+---attaching the required rundata to each.
+---@param ... RailroadCrossing[]: List of crossings to manage.
 function SW.setup(...)
 	SW.crossings = ...
 	for _, crossing in pairs(SW.crossings) do
@@ -64,6 +97,9 @@ end
 
 -- Execution
 
+---Provides the pausing functionality for railroad crossings. Each currently
+---paused crossing has the sleep counter in their rundata decreased by `1`, and
+---those which thus reach a sleep of `0` resume their paused routine.
 function SW.main()
 	-- Record the resumed crossings first, so they aren't removed from the
 	-- source table while iterating it.
@@ -83,16 +119,28 @@ function SW.main()
 	end
 end
 
+---Increases the trains counter in the given crossing's rundata by 1 and calls
+---the crossing's closing routine if no other train is also approaching.
+---@param crossing_id integer|string: ID of the target crossing.
 function SW.crossingClose(crossing_id)
 	if SW.update_and_get_trains(crossing_id, 1) > 1 then return end
 	if SW.load_routine(crossing_id, 1) then SW.do_routine(crossing_id) end
 end
 
+---Decreases the trains counter in the given crossing's rundata by 1 and calls
+---the crossing's opening routine if no more trains are approaching.
+---@param crossing_id integer|string: ID of the target crossing.
 function SW.crossingOpen(crossing_id)
 	if SW.update_and_get_trains(crossing_id, -1) > 0 then return end
 	if SW.load_routine(crossing_id, 2) then SW.do_routine(crossing_id) end
 end
 
+---Adds the given number to the trains counter of the given crossing's rundata
+---and saves the thusly updated counter, if an EEP save slot has been alotted
+---to the crossing by the user.
+---@param crossing_id integer|string: ID of the target crossing.
+---@param step 1 | -1: Number to add to the trains counter.
+---@return integer: The updated trains counter of the crossing.
 function SW.update_and_get_trains(crossing_id, step)
 	local crossing = SW.crossings[crossing_id]
 	crossing.rundata.trains = crossing.rundata.trains + step
@@ -105,6 +153,10 @@ function SW.update_and_get_trains(crossing_id, step)
 	return crossing.rundata.trains
 end
 
+---Loads the given routine into the given crossing's routine rundata.
+---@param crossing_id integer|string: ID of the target crossing.
+---@param routine_id integer: ID of the target routine.
+---@return boolean `true` if loaded successfully, otherwise `false`.
 function SW.load_routine(crossing_id, routine_id)
 	-- Load the crossing and confirm all necessary data exists
 	local crossing = SW.crossings[crossing_id]
@@ -122,6 +174,10 @@ function SW.load_routine(crossing_id, routine_id)
 	return true
 end
 
+---Calls all functions listed in the given crossing's rundata routine,
+---ceasing execution if either one of the called functions returns `false`
+---(like the `SW.wait` command) or all functions have been called.
+---@param crossing_id integer|string: ID of the target crossing.
 function SW.do_routine(crossing_id)
 	local routine = SW.crossings[crossing_id].rundata.routine
 	while #routine > 0 do
