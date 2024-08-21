@@ -73,39 +73,9 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 | `SW.wait(zyklen)` | Pausiert die Befehlsausführung. | `zyklen`: Anzahl der Lua-Zyklen, für die die Ausführung ruhen soll. Ein Zyklus entspricht einem Aufruf der `SW.main()`-Funktion, d.h. wenn diese in jedem Aufruf der `EEPMain()`-Funktion aufgerufen wird, dauert jeder Zyklus 200ms. |
 
 #### Beispiele
-```lua
--- Einfacher BÜ aus zwei Signalen
--- Simple crossing consisting of two signals
-{
-	closing = {
-		SW.signal(1, 2),	-- Signal 1 auf Stellung 2 (= i.d.R. "Halt")
-		SW.signal(2, 2)		-- Signal 2 to position 2 (= "stop", usually)
-	},
-	opening = {
-		SW.signal(1, 1),	-- Signal 1 auf Stellung 1 (= i.d.R. "Fahrt")
-		SW.signal(2, 1)		-- Signal 2 to position 1 (="go", usually)
-	}
-}
-
--- BÜ mit Lichtzeichen und Schranken als separaten Signalen
--- Crossing with lights and barriers as separate Signals
-{
-	closing = {
-		SW.signal(1, 2),	-- Zuerst wird das Lichtzeichen gesetzt
-		SW.signal(2, 2),	-- First, the lights are set
-		SW.wait(25),		-- Warte 5 Sekunden // wait 5 seconds
-		SW.signal(3, 2),	-- Danach werden die Schranken gesetzt
-		SW.signal(4, 2)		-- Thereafter, the barriers are set
-	},
-	opening = {
-		SW.signal(3, 1),
-		SW.signal(4, 1),
-		SW.wait(10),
-		SW.signal(1, 1),
-		SW.signal(2, 1)
-	}
-}
-```
+Beispielkonfigurationen für BÜs können Sie
+[hier](https://github.com/anjo0803/schrankenwaerter/blob/master/examples.lua)
+finden.
 
 ### Kontaktpunkte
 Nachdem die gewünschten BÜs definiert wurden, sind natürlich noch entsprechende
@@ -199,7 +169,8 @@ Currently, the script itself provides the following commands:
 | `SW.wait(cycles)` | Pauses execution of commands. | `cycles`: Number of Lua cycles to pause. One cycle is equivalent to one call of the `SW.main()` function, so if it is called with every call of the `EEPMain()` function, one cycle is 200ms. |
 
 #### Examples
-You can find example configurations [here](#beispiele).
+You can find example configurations for crossings
+[here](https://github.com/anjo0803/schrankenwaerter/blob/master/examples.lua).
 
 ### Contact points
 Naturally, contact points corresponding to the defined railroad crossings still
