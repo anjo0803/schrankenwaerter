@@ -107,7 +107,7 @@ the file
 to the "LUA" folder in the root of your EEP installation. You can then activate
 it in the Lua script of any railroad system using the Lua `require` function:
 ```lua
-SW = require("schrankenwaerter")
+SW = require("Schrankenwaerter")
 ```
 Please also add a call to the `SW.main()` function into your `EEPMain()`
 function in order for the `SW.wait` command to function properly:

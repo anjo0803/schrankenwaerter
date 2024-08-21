@@ -7,7 +7,7 @@ end
 
 -- Einbindung des Skripts und Definieren einiger BÜs
 -- Integrating the script and defining a couple of crossings
-SW = require("schrankenwaerter")
+SW = require("Schrankenwaerter")
 SW.setup({
 
 	-- Einfacher BÜ aus zwei Signalen
