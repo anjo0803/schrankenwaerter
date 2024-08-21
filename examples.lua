@@ -48,6 +48,35 @@ SW.setup({
 			SW.signal(2, 1)
 		}
 	},
+
+	-- Zweiphasige Signale plus Immobilien (hier: Shop-Set V80NJS20083)
+	-- Two-phase signals plus structures (here: shop set V80NJS20083)
+	["wssb"] = {
+		closing = {
+			SW.wait(50),
+			SW.signal(1, 2),
+			SW.signal(2, 2),
+			SW.immo("#1_WSSB_Andreaskreuz2", "Licht", 100),
+			SW.immo("#2_WSSB_Andreaskreuz2", "Licht", 100),
+			SW.immo("#1_WSSB_Andreaskreuz2", "Sound", 100),
+			SW.immo("#2_WSSB_Andreaskreuz2", "Sound", 100),
+			SW.wait(25),
+			SW.signal(1, 3),
+			SW.signal(2, 3),
+			SW.wait(40),
+			SW.immo("#1_WSSB_Andreaskreuz2", "Sound", -100),
+			SW.immo("#2_WSSB_Andreaskreuz2", "Sound", -100),
+		},
+		opening = {
+			SW.signal(1, 2),
+			SW.signal(2, 2),
+			SW.wait(40),
+			SW.signal(1, 1),
+			SW.signal(2, 1),
+			SW.immo("#1_WSSB_Andreaskreuz2", "Licht", -100),
+			SW.immo("#2_WSSB_Andreaskreuz2", "Licht", -100),
+		}
+	},
 })
 
 --[[
@@ -80,3 +109,10 @@ function pass_separate()
 	SW.crossingOpen("separate_signals")
 end
 
+function approach_wssb()
+	SW.crossingClose("wssb")
+end
+
+function pass_wssb()
+	SW.crossingOpen("wssb")
+end
