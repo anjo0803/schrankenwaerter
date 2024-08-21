@@ -10,12 +10,12 @@ Sounds samt Zeitpuffern dazwischen!
 ### Einbinden des Skripts
 Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie bitte
 zunächst die Datei 
-[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/schrankenwaerter.lua)
+[`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
 in den "LUA"-Ordner ihrer EEP-Installation, sodass diese für alle Anlagen
 sichtbar ist. Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript
 dann mittels der Lua-Funktion `require` aktivieren:
 ```lua
-SW = require("schrankenwaerter")
+SW = require("Schrankenwaerter")
 ```
 Fügen Sie bitte außerdem einen Aufruf der Funktion `SW.main()` in ihre
 `EEPMain()`-Funktion ein, damit der `SW.wait`-Befehl korrekt funktioniert:
@@ -30,7 +30,7 @@ end
 Ihre Bahnübergänge können Sie nach Aktivierung des Schrankenwärter-Skripts mit
 der Funktion `SW.setup` definieren:
 ```lua
-SW = require("schrankenwaerter")
+SW = require("Schrankenwaerter")
 SW.setup({
 	-- Liste Ihrer BÜs hier!
 })
@@ -74,7 +74,7 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 
 #### Beispiele
 Beispielkonfigurationen für BÜs können Sie
-[hier](https://github.com/anjo0803/schrankenwaerter/blob/main/examples.lua)
+[hier](https://github.com/anjo0803/schrankenwaerter/blob/main/Examples.lua)
 finden.
 
 ### Kontaktpunkte
@@ -95,24 +95,20 @@ Für den BÜ wieder freigebende Kontaktpunkte muss nur sinngemäß die Funktion
 [Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
 
 ## English
-The **Schrankenwaerter** is a Lua script for controlling railroad crossings in
-the train simulator EEP - from a simple crossing of just two signals to complex
+**Schrankenwaerter** is a Lua script for controlling railroad crossings in the
+train simulator EEP - from a simple crossing of just two signals to complex
 setups of many separate lights, barriers, structures, and sounds plus time
 buffers in between!
 
 ### Using the script
 To use the Schrankenwaerter script in your railroad system, please first copy
 the file
-[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/schrankenwaerter.lua)
+[`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
 to the "LUA" folder in the root of your EEP installation. You can then activate
 it in the Lua script of any railroad system using the Lua `require` function:
 ```lua
 SW = require("schrankenwaerter")
 ```
-
- simply copy the
-file contents of `schrankenwaerter.lua` to your system's lua script.
-
 Please also add a call to the `SW.main()` function into your `EEPMain()`
 function in order for the `SW.wait` command to function properly:
 ```lua
@@ -126,7 +122,7 @@ end
 After activating the Schrankenwaerter script, you can define your railroad
 crossings using the `SW.setup` function:
 ```lua
-SW = require("schrankenwaerter")
+SW = require("Schrankenwaerter")
 SW.setup({
 	-- List of your railroad crossings here!
 })
@@ -137,7 +133,6 @@ In order for the script to correctly manage your crossings, they must be
 described in the following structure:
 ```lua
 [ID] = {
-	name = "My Crossing",
 	slot = 1,
 	closing = {
 		-- Will be detailed below in "Commands"
@@ -170,7 +165,7 @@ Currently, the script itself provides the following commands:
 
 #### Examples
 You can find example configurations for crossings
-[here](https://github.com/anjo0803/schrankenwaerter/blob/main/examples.lua).
+[here](https://github.com/anjo0803/schrankenwaerter/blob/main/Examples.lua).
 
 ### Contact points
 Naturally, contact points corresponding to the defined railroad crossings still

@@ -1,0 +1,67 @@
+name: installer
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  zip:
+    name: Create installer zip
+
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create EEP file
+        shell: cmd
+        run: |
+          @echo off
+          set EEP=Installation.eep
+          set VER=${{ github.event.release.tag_name }}
+          echo [Install_00]> %EEP%
+          echo Name_GER = "Schrankenwaerter %VER%">> %EEP%
+          echo Name_ENG = "Schrankenwaerter %VER%">> %EEP%
+          echo Name_FRA = "Schrankenwaerter %VER%">> %EEP%
+          echo Name_POL = "Schrankenwaerter %VER%">> %EEP%
+          echo Desc_GER = "Lua-Skript zum Steuern von Bahnübergängen.">> %EEP%
+          echo Desc_ENG = "Lua script for controlling railroad crossings.">> %EEP%
+          echo Desc_FRA = "Script Lua pour le commande des passages à niveau.">> %EEP%
+          echo Desc_POL = "Skrypt Lua do kontrolowania przejazdów kolejowych.">> %EEP%
+          echo Script = "Install_00\Install.ini">> %EEP%
+
+      - name: Create Install.ini
+        shell: cmd
+        run: |
+          @echo off
+          mkdir Install_00
+          set INI=.\Install_00\Install.ini
+          echo [EEPInstall]> %INI%
+          echo EEPVersion = 10>> %INI%
+          echo File001 = "Schrankenwaerter.lua","LUA\Schrankenwaerter.lua">> %INI%
+
+      - name: Copy script
+        shell: cmd
+        run: copy Schrankenwaerter.lua Install_00\
+
+      - name: Zip files
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: Installation.eep Install_00/
+          dest: Installable.zip
+
+  attach:
+    name: Attach installer to release
+    needs: zip
+
+    permissions:
+      contents: write
+
+    runs-on: windows-latest
+    steps:
+      - name: Attach zip
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: Installable.zip
+          asset_name: Schrankenwaerter_$tag.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
