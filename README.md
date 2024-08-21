@@ -10,7 +10,7 @@ Sounds samt Zeitpuffern dazwischen!
 ### Einbinden des Skripts
 Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie bitte
 zunächst die Datei 
-[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/master/schrankenwaerter.lua)
+[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/schrankenwaerter.lua)
 in den "LUA"-Ordner ihrer EEP-Installation, sodass diese für alle Anlagen
 sichtbar ist. Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript
 dann mittels der Lua-Funktion `require` aktivieren:
@@ -74,7 +74,7 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 
 #### Beispiele
 Beispielkonfigurationen für BÜs können Sie
-[hier](https://github.com/anjo0803/schrankenwaerter/blob/master/examples.lua)
+[hier](https://github.com/anjo0803/schrankenwaerter/blob/main/examples.lua)
 finden.
 
 ### Kontaktpunkte
@@ -92,7 +92,7 @@ Für den BÜ wieder freigebende Kontaktpunkte muss nur sinngemäß die Funktion
 `SW.crossingOpen(bue_id)` aufgerufen werden.
 
 ### Lizenz
-[Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
+[Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
 
 ## English
 The **Schrankenwaerter** is a Lua script for controlling railroad crossings in
@@ -103,7 +103,7 @@ buffers in between!
 ### Using the script
 To use the Schrankenwaerter script in your railroad system, please first copy
 the file
-[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/master/schrankenwaerter.lua)
+[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/schrankenwaerter.lua)
 to the "LUA" folder in the root of your EEP installation. You can then activate
 it in the Lua script of any railroad system using the Lua `require` function:
 ```lua
@@ -170,7 +170,7 @@ Currently, the script itself provides the following commands:
 
 #### Examples
 You can find example configurations for crossings
-[here](https://github.com/anjo0803/schrankenwaerter/blob/master/examples.lua).
+[here](https://github.com/anjo0803/schrankenwaerter/blob/main/examples.lua).
 
 ### Contact points
 Naturally, contact points corresponding to the defined railroad crossings still
@@ -187,4 +187,4 @@ In contact points that should open the crossing, simply call the
 `SW.crossingOpen(crossing_id)` function instead.
 
 ### Licence
-[Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/master/UNLICENSE.txt)
+[Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
