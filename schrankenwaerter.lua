@@ -38,7 +38,7 @@ end
 ---@param position integer: ID of the position to set the signal to.
 ---@return function: Function that will be called when executing the routine.
 function SW.signal(signal_id, position)
-	if EEPVer < 10.2 then return function (_) end end
+	if not EEPSetSignal then return function (_) end end
 	return function(_)
 		EEPSetSignal(signal_id, position)
 		return true
@@ -51,7 +51,7 @@ end
 ---@param step integer: Number of steps to move the axis.
 ---@return function: Function that will be called when executing the routine.
 function SW.immo(immo_id, axis, step)
-	if EEPVer < 11.1 then return function (_) end end
+	if not EEPStructureAnimateAxis then return function (_) end end
 	return function(_)
 		EEPStructureAnimateAxis(immo_id, axis, step)
 		return true
@@ -63,7 +63,7 @@ end
 ---@param turn_on boolean: `true` to turn the sound on, `false` to turn it off.
 ---@return function: Function that will be called when executing the routine.
 function SW.sound(sound_id, turn_on)
-	if EEPVer < 13.1 then return function (_) end end
+	if not EEPStructurePlaySound then return function (_) end end
 	return function(_)
 		EEPStructurePlaySound(sound_id, turn_on)
 		return true
@@ -87,7 +87,7 @@ function SW.setup(...)
 		}
 
 		-- If a save slot exists, load the saved number of trains
-		if crossing.slot ~= nil and EEPVer >= 11 then
+		if crossing.slot ~= nil and EEPLoadData then
 			local save_exists, saved_trains = EEPLoadData(crossing.slot)
 			if save_exists then crossing.rundata.trains = saved_trains end
 		end
@@ -146,7 +146,7 @@ function SW.update_and_get_trains(crossing_id, step)
 	crossing.rundata.trains = crossing.rundata.trains + step
 	if crossing.rundata.trains < 0 then crossing.rundata.trains = 0 end
 
-	if crossing.slot ~= nil and EEPVer >= 11 then
+	if crossing.slot ~= nil and EEPSaveData then
 		EEPSaveData(crossing.slot, crossing.rundata.trains)
 	end
 
