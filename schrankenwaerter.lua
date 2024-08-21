@@ -1,30 +1,10 @@
----------- SCHRANKENWAERTER START ----------
-SW = { version = "1.0.0" }
 
---[[ NUTZUNG // USAGE ]]--
--- Sie können Ihre Bahnübergänge in der Funktion direkt unter diesem Kommentar
--- beschreiben. Fügen Sie bitte außerdem einen Aufruf der Funktion SW.main in
--- Ihre EEPMain-Funktion ein, um den SW.wait-Befehl nutzen zu können.
--- You can describe your railroad crossings in the function directly below this
--- comment. Please also call the SW.main function within your EEPMain function
--- to be able to use the SW.wait command.
+local SW = {
+	version = "1.0.0",
+	sleeping = {},
+	crossings = {}
+}
 
-function SW.CROSSING_CONFIG() return {
-	-- BÜS HIER BESCHREIBEN // DESCRIBE CROSSINGS HERE
-	--[[ BÜ-Datenstruktur // Crossing Data Structure:
-		- slot: string (optional)
-		- closing: {
-			- Liste von Befehlen, z.B. SW.signal(id, stellung)
-			- List of commands, e.g. SW.signal(id, position)
-		}
-		- opening: Wie "closing" // Like "closing"
-	]]
-} end
-
--- Ab hier rein interne Funktionalität -- Internal functionality only from here
-
-SW.is_initialized = false
-SW.sleeping = {}
 
 -- Crossing Actions
 
@@ -60,17 +40,13 @@ function SW.sound(sound_id, turn_on)
 	end
 end
 
--- Execution
-
-function SW.init()
-	if SW.is_initialized then return end	-- Prevent multiple init calls
-
-	SW.crossings = SW.CROSSING_CONFIG()
+function SW.setup(...)
+	SW.crossings = ...
 	for _, crossing in pairs(SW.crossings) do
 		-- Move the declared opening and closing sequences to routines
 		crossing.routines = { crossing.closing, crossing.opening }
 
-		-- Initialize the necessary rundata
+		-- Initialize the data that will be used during execution
 		crossing.rundata = {
 			trains = 0,
 			sleep = 0,
@@ -83,30 +59,38 @@ function SW.init()
 			if save_exists then crossing.rundata.trains = saved_trains end
 		end
 	end
-	SW.is_initialized = true
-	print("Schrankenwärter ", SW.version, " aktiv")
+	print("Schrankenwaerter ", SW.version, " set up!")
 end
 
-function SW.main()
-	-- Confirm that the necessary rundata has been set up
-	if not SW.is_initialized then SW.init() end
+-- Execution
 
-	-- Advance the timeout for all paused crossings and resume if it's over
+function SW.main()
+	-- Record the resumed crossings first, so they aren't removed from the
+	-- source table while iterating it.
 	local resumed = {}
 	for index, crossing_id in ipairs(SW.sleeping) do
 		local rundata = SW.crossings[crossing_id].rundata
 		if rundata.sleep <= 0 then
-			table.insert(resumed, index)	-- Don't remove while iterating
-			SW.do_routine(crossing_id)
+			resumed[crossing_id] = index
 		else
 			rundata.sleep = rundata.sleep - 1
 		end
 	end
 
-	-- Remove all the resumed crossings from the sleeping list
-	for i = 1, #resumed do
-		table.remove(SW.sleeping, i)
+	for crossing_id, sleep_index in pairs(resumed) do
+		SW.do_routine(crossing_id)
+		table.remove(SW.sleeping, sleep_index)
 	end
+end
+
+function SW.crossingClose(crossing_id)
+	if SW.update_and_get_trains(crossing_id, 1) > 1 then return end
+	if SW.load_routine(crossing_id, 1) then SW.do_routine(crossing_id) end
+end
+
+function SW.crossingOpen(crossing_id)
+	if SW.update_and_get_trains(crossing_id, -1) > 0 then return end
+	if SW.load_routine(crossing_id, 2) then SW.do_routine(crossing_id) end
 end
 
 function SW.update_and_get_trains(crossing_id, step)
@@ -119,18 +103,6 @@ function SW.update_and_get_trains(crossing_id, step)
 	end
 
 	return crossing.rundata.trains
-end
-
-function SW.crossingClose(crossing_id)
-	if SW.update_and_get_trains(crossing_id, 1) == 1 then
-		if SW.load_routine(crossing_id, 1) then SW.do_routine(crossing_id) end
-	end
-end
-
-function SW.crossingOpen(crossing_id)
-	if SW.update_and_get_trains(crossing_id, -1) == 0 then
-		if SW.load_routine(crossing_id, 2) then SW.do_routine(crossing_id) end
-	end
 end
 
 function SW.load_routine(crossing_id, routine_id)
@@ -159,5 +131,4 @@ function SW.do_routine(crossing_id)
 	end
 end
 
-SW.init()
----------- SCHRANKENWAERTER ENDE ----------
+return SW

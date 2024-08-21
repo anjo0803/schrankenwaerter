@@ -8,22 +8,36 @@ komplexen Systemen aus vielen separaten Lichtzeichen, Schranken, Immobilien und
 Sounds samt Zeitpuffern dazwischen!
 
 ### Einbinden des Skripts
-Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie einfach
-den Inhalt der Datei `schrankenwaerter.lua` in das Lua-Skript Ihrer Anlage.
+Um das Schrankenwärter-Skript in Ihre Anlage einzubinden, kopieren Sie bitte
+zunächst die Datei 
+[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/master/schrankenwaerter.lua)
+in den "LUA"-Ordner ihrer EEP-Installation, sodass diese für alle Anlagen
+sichtbar ist. Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript
+dann mittels der Lua-Funktion `require` aktivieren:
+```lua
+SW = require("schrankenwaerter")
+```
 Fügen Sie bitte außerdem einen Aufruf der Funktion `SW.main()` in ihre
-`EEPMain()`-Funktion ein, damit der `SW.wait`-Befehl funktioniert.
-
-Zur einfachen späteren Identifizierung befindet sich das komplette
-Schrankenwärter-Skript zwischen den beiden Kommentar-Blöcken "SCHRANKENWAERTER
-START" und "SCHRANKENWAERTER ENDE".
+`EEPMain()`-Funktion ein, damit der `SW.wait`-Befehl korrekt funktioniert:
+```lua
+function EEPMain()
+	SW.main()
+	return 1
+end
+```
 
 ### Konfigurieren eines BÜs
-Ihre Bahnübergänge können Sie innerhalb des `return`-Werts der Funktion
-`SW.CROSSING_CONFIG` am Anfang des Schrankenwärter-Skripts beschreiben. Im
-Skript selbst weist ein weiterer Kommentar die richtige Stelle aus.
+Ihre Bahnübergänge können Sie nach Aktivierung des Schrankenwärter-Skripts mit
+der Funktion `SW.setup` definieren:
+```lua
+SW = require("schrankenwaerter")
+SW.setup({
+	-- Liste Ihrer BÜs hier!
+})
+```
 
 #### Datenstruktur
-Damit das Skript Ihren BÜ korrekt handhaben kann, muss dieser in der folgenden
+Damit das Skript Ihre BÜs korrekt handhaben kann, müssen diese in der folgenden
 Struktur beschrieben werden:
 ```lua
 [ID] = {
@@ -37,7 +51,7 @@ Struktur beschrieben werden:
 }
 ```
 Das Feld "slot" ist dabei optional: Sie können darin dem BÜ einen der
-EEPSaveSlots zuweisen. Dieser wird dann genutzt, um die Anzahl der Züge zu
+EEPSaveData-Slots zuweisen. Dieser wird dann genutzt, um die Anzahl der Züge zu
 speichern, die den BÜ momentan befahren, sodass diese Daten nicht beim Neuladen
 des Skripts oder der Anlage verloren gehen. Die `ID` können Sie beliebig wählen
 (bspw `"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in
@@ -117,22 +131,39 @@ setups of many separate lights, barriers, structures, and sounds plus time
 buffers in between!
 
 ### Using the script
-To use the Schrankenwaerter script in your railroad system, simply copy the
-file contents of `schrankenwaerter.lua` to your system's lua script. Please
-also add a call to the `SW.main()` function into your `EEPMain()` function in
-order to enable functionality of the `SW.wait` command.
+To use the Schrankenwaerter script in your railroad system, please first copy
+the file
+[`schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/master/schrankenwaerter.lua)
+to the "LUA" folder in the root of your EEP installation. You can then activate
+it in the Lua script of any railroad system using the Lua `require` function:
+```lua
+SW = require("schrankenwaerter")
+```
 
-For easy identification of the Schrankenwaerter script later on, its entirety
-is contained between the two comment blocks "SCHRANKENWAERTER START" and
-"SCHRANKENWAERTER ENDE".
+ simply copy the
+file contents of `schrankenwaerter.lua` to your system's lua script.
+
+Please also add a call to the `SW.main()` function into your `EEPMain()`
+function in order for the `SW.wait` command to function properly:
+```lua
+function EEPMain()
+	SW.main()
+	return 1
+end
+```
 
 ### Crossing setup
-You may describe your railroad crossings within the `return` value of the
-`SW.CROSSING_CONFIG` function at the top of the Schrankenwaerter script. The
-correct spot is also marked by a comment within the script itself.
+After activating the Schrankenwaerter script, you can define your railroad
+crossings using the `SW.setup` function:
+```lua
+SW = require("schrankenwaerter")
+SW.setup({
+	-- List of your railroad crossings here!
+})
+```
 
 #### Data structure
-In order for the script to correctly manage your crossing, it must be
+In order for the script to correctly manage your crossings, they must be
 described in the following structure:
 ```lua
 [ID] = {
@@ -146,12 +177,12 @@ described in the following structure:
 	}
 }
 ```
-The "slot" field is optional: Within it, you may assign one of the EEPSaveSlots
-to the crossing. This will then be used to save the number of trains currently
-approaching the crossing, so that data isn't lost during reloads of the script
-or your whole railway system. You are also free to choose the `ID` (e.g.
-`"crossing_example_st"` or just numerically `1`) or leave it out entirely, in
-which case Lua will automatically index it numerically.
+The "slot" field is optional: Within it, you may assign one of the EEPSaveData
+slots to the crossing. This will then be used to save the number of trains
+currently approaching the crossing, so that data isn't lost during reloads of
+the script or your whole railway system. You are also free to choose the `ID`
+(e.g. `"crossing_example_st"` or just numerically `1`) or leave it out
+entirely, in which case Lua will automatically index it numerically.
 
 #### Commands
 Crossings are controlled by the Schrankenwaerter script via "commands". A list
