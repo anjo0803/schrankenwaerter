@@ -94,25 +94,25 @@ points directly.
 ]]
 
 function approach_simple()
-	SW.crossingClose("simple")
+	SW.close("simple")
 end
 
 function pass_simple()
-	SW.crossingOpen("simple")
+	SW.open("simple")
 end
 
 function announce_separate()
-	SW.crossingClose("separate_signals")
+	SW.close("separate_signals")
 end
 
 function pass_separate()
-	SW.crossingOpen("separate_signals")
+	SW.open("separate_signals")
 end
 
 function approach_wssb()
-	SW.crossingClose("wssb")
+	SW.close("wssb")
 end
 
 function pass_wssb()
-	SW.crossingOpen("wssb")
+	SW.open("wssb")
 end

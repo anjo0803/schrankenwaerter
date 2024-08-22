@@ -1,8 +1,10 @@
 local SW = {
-	version = "1.0.0",
-	sleeping = {},
-	crossings = {}
+	version = "1.1.0",
+	crossings = {},
+	observe = {}
 }
+local UTILS = {}
+
 
 -- Crossing Type Definition
 
@@ -17,17 +19,20 @@ local SW = {
 ---@class Rundata
 ---@field trains integer: Number of trains currently approaching the crossing.
 ---@field sleep integer: Number of Lua cycles the crossing is still paused for.
----@field routine function[]: Functions left to call in the active routine.
+---@field queue integer[]: IDs of the currently-queued routines.
+---@field step integer: ID of the next step to execute in the active routine.
 
 -- Crossing Actions
 
----Pauses a crossing's routine for the given number of Lua cycles.
+---Pauses a crossing's active routine for the given number of Lua cycles.
 ---@param duration integer: Number of Lua cycles to wait.
 ---@return function: Function that will be called when executing the routine.
 function SW.wait(duration)
 	return function(crossing_id)
 		SW.crossings[crossing_id].rundata.sleep = duration
-		table.insert(SW.sleeping, crossing_id)
+		if not UTILS.array_contains(SW.observe, crossing_id) then
+			table.insert(SW.observe, crossing_id)
+		end
 		return false
 	end
 end
@@ -70,73 +75,80 @@ function SW.sound(sound_id, turn_on)
 end
 
 ---Initializes the script with the given set of railroad crossing definitions,
----attaching the required rundata to each.
+---attaching the required rundata to each. If possible, any rundata saved for
+---the crossing is loaded.
 ---@param ... RailroadCrossing[]: List of crossings to manage.
 function SW.setup(...)
 	SW.crossings = ...
-	for _, crossing in pairs(SW.crossings) do
-		-- Move the declared opening and closing sequences to routines
+	for id, crossing in pairs(SW.crossings) do
+		-- Make routines accessible by index number
 		crossing.routines = { crossing.closing, crossing.opening }
 
-		-- Initialize the data that will be used during execution
-		crossing.rundata = {
-			trains = 0,
-			sleep = 0,
-			routine = {}
-		}
-
-		-- If a save slot exists, load the saved number of trains
-		if crossing.slot ~= nil and EEPLoadData then
-			local save_exists, saved_trains = EEPLoadData(crossing.slot)
-			if save_exists then crossing.rundata.trains = saved_trains end
+		crossing.rundata = UTILS.load_rundata(id)
+		if #crossing.rundata.queue > 0 then	-- Resume queued routines
+			table.insert(SW.observe, id)
 		end
 	end
 	print("Schrankenwaerter ", SW.version, " set up!")
 end
 
--- Execution
-
----Provides the pausing functionality for railroad crossings. Each currently
----paused crossing has the sleep counter in their rundata decreased by `1`, and
----those which thus reach a sleep of `0` resume their paused routine.
+---The periodically-called heartbeat of the script! Checks all crossings that
+---are currently being observed. Ones that are paused have their sleep counter
+---reduced by `1`. Others have their routine queues processed. Crossings which
+---have worked off their whole queue and aren't sleeping anymore are removed
+---from the list of observed crossings.
 function SW.main()
-	-- Record the resumed crossings first, so they aren't removed from the
-	-- source table while iterating it.
-	local resumed = {}
-	for index, crossing_id in ipairs(SW.sleeping) do
+	-- Record the crossings due for removal from the observe list first, so
+	-- they aren't removed while iterating it.
+	local to_remove = {}
+	for index, crossing_id in pairs(SW.observe) do
 		local rundata = SW.crossings[crossing_id].rundata
-		if rundata.sleep <= 0 then
-			resumed[crossing_id] = index
-		else
+		if rundata.sleep > 0 then
 			rundata.sleep = rundata.sleep - 1
+		elseif #rundata.queue > 0 then
+			local finished = SW.process_queue(crossing_id)
+			if finished then table.insert(to_remove, index) end
+		else
+			table.insert(to_remove, index)
 		end
+		UTILS.save_rundata(crossing_id)
 	end
 
-	for crossing_id, sleep_index in pairs(resumed) do
-		SW.do_routine(crossing_id)
-		table.remove(SW.sleeping, sleep_index)
+	for _, observe_index in pairs(to_remove) do
+		table.remove(SW.observe, observe_index)
 	end
 end
 
----Increases the trains counter in the given crossing's rundata by 1 and calls
----the crossing's closing routine if no other train is also approaching.
+---Increases the trains counter in the given crossing's rundata by `1` and
+---calls the crossing's closing routine if no other train is also approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
-function SW.crossingClose(crossing_id)
+function SW.close(crossing_id)
 	if SW.update_and_get_trains(crossing_id, 1) > 1 then return end
-	if SW.load_routine(crossing_id, 1) then SW.do_routine(crossing_id) end
+
+	SW.queue_routine(crossing_id, 1)
+	if not UTILS.array_contains(SW.observe, crossing_id) then
+		table.insert(SW.observe, crossing_id)
+	end
 end
 
----Decreases the trains counter in the given crossing's rundata by 1 and calls
----the crossing's opening routine if no more trains are approaching.
+---Decreases the trains counter in the given crossing's rundata by `1` and
+---calls the crossing's opening routine if no more trains are approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
-function SW.crossingOpen(crossing_id)
+function SW.open(crossing_id)
 	if SW.update_and_get_trains(crossing_id, -1) > 0 then return end
-	if SW.load_routine(crossing_id, 2) then SW.do_routine(crossing_id) end
+
+	SW.queue_routine(crossing_id, 2)
+	if not UTILS.array_contains(SW.observe, crossing_id) then
+		table.insert(SW.observe, crossing_id)
+	end
 end
 
----Adds the given number to the trains counter of the given crossing's rundata
----and saves the thusly updated counter, if an EEP save slot has been alotted
----to the crossing by the user.
+-- Backwards compatibility for v1.0.0
+function SW.crossingClose(crossing_id) SW.close(crossing_id) end
+function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
+
+---Adds the given number to the trains counter of the given crossing and tries
+---to save the thusly updated rundata.
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@param step 1 | -1: Number to add to the trains counter.
 ---@return integer: The updated trains counter of the crossing.
@@ -145,45 +157,160 @@ function SW.update_and_get_trains(crossing_id, step)
 	crossing.rundata.trains = crossing.rundata.trains + step
 	if crossing.rundata.trains < 0 then crossing.rundata.trains = 0 end
 
-	if crossing.slot ~= nil and EEPSaveData then
-		EEPSaveData(crossing.slot, crossing.rundata.trains)
-	end
+	UTILS.save_rundata(crossing_id)
 
 	return crossing.rundata.trains
 end
 
----Loads the given routine into the given crossing's routine rundata.
+---Adds a routine to a crossing's routine queue.
 ---@param crossing_id integer|string: ID of the target crossing.
----@param routine_id integer: ID of the target routine.
----@return boolean `true` if loaded successfully, otherwise `false`.
-function SW.load_routine(crossing_id, routine_id)
-	-- Load the crossing and confirm all necessary data exists
+---@param routine_id integer: ID of the desired routine.
+function SW.queue_routine(crossing_id, routine_id)
+	table.insert(SW.crossings[crossing_id].rundata.queue, routine_id)
+	UTILS.save_rundata(crossing_id)
+end
+
+---Works through a crossing's routine queue.
+---
+---Until the queue is cleared, the steps of the routine at queue index `1` are
+---executed in order. If the crossing was paused in between, execution is
+---resumed at the step after the responsible wait command. If one of the
+---executed commands returns `false` (currently just the wait command), the
+---process is stopped. Otherwise, routines are completely worked through one
+---after another until the queue is completely cleared.
+---@param crossing_id integer|string: ID of the target crossing.
+---@return boolean: `true` if the queue got wholly cleared, otherwise `false`.
+function SW.process_queue(crossing_id)
 	local crossing = SW.crossings[crossing_id]
-	if crossing == nil then return false end
+	while #crossing.rundata.queue > 0 do
+		local active = crossing.routines[crossing.rundata.queue[1]]
+		for i = crossing.rundata.step, #active do
+			crossing.rundata.step = i + 1
+			if i == #active then
+				table.remove(crossing.rundata.queue, 1)
+				crossing.rundata.step = 1
+			end
 
-	-- Load the appropriate routine
-	local actions = crossing.routines[routine_id]
-	if actions == nil then return false end
-
-	-- Copy it to the rundata, since executed statements will be deleted
-	crossing.rundata.routine = {}
-	for k, v in pairs(actions) do
-		crossing.rundata.routine[k] = v
+			local continue = active[i](crossing_id)
+			if not continue then return false end
+		end
 	end
 	return true
 end
 
----Calls all functions listed in the given crossing's rundata routine,
----ceasing execution if either one of the called functions returns `false`
----(like the `SW.wait` command) or all functions have been called.
+---Description of the save format.
+local SAVE_FORMAT = {
+	version = 1,
+	trains = 2,	-- Index of the trains counter.
+	sleep = 3,	-- Index of the sleep counter.
+	step = 4,	-- Index of the number of the next step to execute.
+	queue = 5,	-- Index of the routine queue items.
+	delimiter = ",",		-- Char separating the indices.
+	delimiter_queue = "-"	-- Char separating the routine queue items.
+}
+
+---Tries to save a crossing's current rundata. If the `EEPSaveData` function is
+---not available or the user hasn't alotted a save slot for the given crossing,
+---the save fails. The different components of the data saved are formatted
+---according to the `SAVE_FORMAT`.
 ---@param crossing_id integer|string: ID of the target crossing.
-function SW.do_routine(crossing_id)
-	local routine = SW.crossings[crossing_id].rundata.routine
-	while #routine > 0 do
-		local continue = routine[1](crossing_id)
-		table.remove(routine, 1)
-		if not continue then break end
+function UTILS.save_rundata(crossing_id)
+	local crossing = SW.crossings[crossing_id]
+	if crossing.slot == nil or not EEPSaveData then return end
+
+	local rundata = crossing.rundata
+	local to_save = {
+		[SAVE_FORMAT.version] = SW.version,
+		[SAVE_FORMAT.trains] = rundata.trains,
+		[SAVE_FORMAT.sleep] = rundata.sleep,
+		[SAVE_FORMAT.step] = rundata.step,
+		[SAVE_FORMAT.queue] = table.concat(rundata.queue,
+				SAVE_FORMAT.delimiter_queue)
+	}
+	EEPSaveData(crossing.slot, table.concat(to_save, SAVE_FORMAT.delimiter))
+end
+
+---Tries to load a crossing's saved rundata. If the `EEPLoadData` function is
+---not available or the user hasn't alotted a save slot for the given crossing,
+---the load fails, returning standard values. The loaded string is split into
+---its components (as determined by the `SAVE_FORMAT`) and returned packed into
+---a rundata table.
+---@param crossing_id integer|string: ID of the target crossing.
+---@return Rundata: The loaded rundata, or standard values if loading failed.
+function UTILS.load_rundata(crossing_id)
+	local crossing = SW.crossings[crossing_id]
+	if crossing.slot == nil or not EEPLoadData then
+		return {
+			queue = {},
+			sleep = 0,
+			step = 1,
+			trains = 0
+		}
 	end
+
+	-- Split up the different components of the saved data
+	local parts = UTILS.split_string(SAVE_FORMAT.delimiter,
+			select(-1, EEPLoadData(crossing.slot)))
+
+	-- Backwards compatibility for v1.0.0, which only saved num of trains
+	if #parts == 1 then
+		return {
+			trains = tonumber(parts[1]) or 0,
+			sleep = 0,
+			step = 1,
+			queue = {}
+		}
+	end
+
+	-- Extract the routine queue from the string segment
+	local queue = {}
+	if parts[SAVE_FORMAT.queue] ~= "" then
+		local ids = UTILS.split_string(SAVE_FORMAT.delimiter_queue,
+				parts[SAVE_FORMAT.queue])
+		for index, routine_id in pairs(ids) do
+			queue[index] = tonumber(routine_id)
+		end
+	end
+
+	-- Convert everything to numerical values and return it as a rundata table
+	return {
+		trains = tonumber(parts[SAVE_FORMAT.trains]) or 0,
+		sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0,
+		step = tonumber(parts[SAVE_FORMAT.step]) or 1,
+		queue = queue
+	}
+end
+
+---Utility function for splitting a string at the given delimiting character.
+---@param delimiter string: The **single** character to split at.
+---@param to_split string: The string to split.
+---@return table<integer, string>: The substrings the string was split into.
+function UTILS.split_string(delimiter, to_split)
+	to_split = tostring(to_split)
+	local parts = {}
+	local part = ""
+	for i = 1, #to_split do
+		local letter = to_split:sub(i, i)
+		if letter == delimiter then
+			table.insert(parts, part)
+			part = ""
+		else
+			part = part..letter
+		end
+	end
+	if #part > 0 then table.insert(parts, part) end
+	return parts
+end
+
+---Utility function for checking whether an array contains a specific item.
+---@param array table<integer, any>: The array to search.
+---@param search any: The item to look for.
+---@return boolean: `true` if the item was found, otherwise `false`.
+function UTILS.array_contains(array, search)
+	for _, value in ipairs(array) do
+		if value == search then return true end
+	end
+	return false
 end
 
 return SW

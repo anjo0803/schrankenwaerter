@@ -55,11 +55,12 @@ Struktur beschrieben werden:
 }
 ```
 Das Feld "slot" ist dabei optional: Sie können darin dem BÜ einen der
-EEPSaveData-Slots zuweisen. Dieser wird dann genutzt, um die Anzahl der Züge zu
-speichern, die den BÜ momentan befahren, sodass diese Daten nicht beim Neuladen
-des Skripts oder der Anlage verloren gehen. Die `ID` können Sie beliebig wählen
-(bspw `"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in
-diesem Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
+EEPSaveData-Slots zuweisen. Dieser wird dann genutzt, um Ausführungsdaten für
+den BÜ (bspw. Anzahl der nahenden Züge oder den als nächstes auszuführenden
+Befehl) zu speichern, sodass diese Daten nicht beim Neuladen des Skripts oder
+der Anlage verloren gehen. Die `ID` können Sie beliebig wählen (bspw
+`"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in diesem
+Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
 
 #### Befehle
 Die BÜ-Steuerung des Schrankenwärter-Skripts erfolgt durch "Befehle". Den
@@ -88,13 +89,13 @@ zwei Möglichkeiten:
 
 - Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) sollte
   es möglich sein, das Schrankenwärter-Skript direkt aufzurufen, indem Sie
-  `SW.crossingClose(bue_id)` eintragen (und für `bue_id` die von Ihnen für den
+  `SW.close(bue_id)` eintragen (und für `bue_id` die von Ihnen für den
   BÜ zuvor gewählte `ID` einsetzen).
 - Alternativ können Sie selbstverständlich eine eigene Funktion definieren, die
-  dann ihrerseits `SW.crossingClose(bue_id)` aufruft, und diese eintragen.
+  dann ihrerseits `SW.close(bue_id)` aufruft, und diese eintragen.
 
 Für den BÜ wieder freigebende Kontaktpunkte muss nur sinngemäß die Funktion
-`SW.crossingOpen(bue_id)` aufgerufen werden.
+`SW.open(bue_id)` aufgerufen werden.
 
 ### Lizenz
 [Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
@@ -154,11 +155,12 @@ described in the following structure:
 }
 ```
 The "slot" field is optional: Within it, you may assign one of the EEPSaveData
-slots to the crossing. This will then be used to save the number of trains
-currently approaching the crossing, so that data isn't lost during reloads of
-the script or your whole railway system. You are also free to choose the `ID`
-(e.g. `"crossing_example_st"` or just numerically `1`) or leave it out
-entirely, in which case Lua will automatically index it numerically.
+slots to the crossing. This will then be used to save the crossing's execution
+data (e.g. number of trains approaching the crossing or the command to execute
+next), so that this isn't lost during reloads of the script or your whole
+railway system. You are also free to choose the `ID` (e.g.
+`"crossing_example_st"` or just numerically `1`) or leave it out entirely, in
+which case Lua will automatically index it numerically.
 
 #### Commands
 Crossings are controlled by the Schrankenwaerter script via "commands". A list
@@ -185,13 +187,13 @@ call therein:
 
 - Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it
   should be possible to call the Schrankenwaerter script directly via
-  `SW.crossingClose(crossing_id)` (replacing `crossing_id` with the `ID` you
+  `SW.close(crossing_id)` (replacing `crossing_id` with the `ID` you
   chose for the crossing earlier).
 - Alternatively, you naturally can just define another function, which itself
-  calls `SW.crossingClose(crossing_id)`, and use that.
+  calls `SW.close(crossing_id)`, and use that.
 
 In contact points that should open the crossing, simply call the
-`SW.crossingOpen(crossing_id)` function instead.
+`SW.open(crossing_id)` function instead.
 
 ### Licence
 [Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
