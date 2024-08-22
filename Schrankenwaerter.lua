@@ -122,7 +122,7 @@ end
 ---Increases the trains counter in the given crossing's rundata by `1` and
 ---calls the crossing's closing routine if no other train is also approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
-function SW.crossingClose(crossing_id)
+function SW.close(crossing_id)
 	if SW.update_and_get_trains(crossing_id, 1) > 1 then return end
 
 	SW.queue_routine(crossing_id, 1)
@@ -134,7 +134,7 @@ end
 ---Decreases the trains counter in the given crossing's rundata by `1` and
 ---calls the crossing's opening routine if no more trains are approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
-function SW.crossingOpen(crossing_id)
+function SW.open(crossing_id)
 	if SW.update_and_get_trains(crossing_id, -1) > 0 then return end
 
 	SW.queue_routine(crossing_id, 2)
@@ -142,6 +142,10 @@ function SW.crossingOpen(crossing_id)
 		table.insert(SW.observe, crossing_id)
 	end
 end
+
+-- Backwards compatibility for v1.0.0
+function SW.crossingClose(crossing_id) SW.close(crossing_id) end
+function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 
 ---Adds the given number to the trains counter of the given crossing and tries
 ---to save the thusly updated rundata.

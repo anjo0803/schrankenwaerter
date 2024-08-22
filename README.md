@@ -89,13 +89,13 @@ zwei Möglichkeiten:
 
 - Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) sollte
   es möglich sein, das Schrankenwärter-Skript direkt aufzurufen, indem Sie
-  `SW.crossingClose(bue_id)` eintragen (und für `bue_id` die von Ihnen für den
+  `SW.close(bue_id)` eintragen (und für `bue_id` die von Ihnen für den
   BÜ zuvor gewählte `ID` einsetzen).
 - Alternativ können Sie selbstverständlich eine eigene Funktion definieren, die
-  dann ihrerseits `SW.crossingClose(bue_id)` aufruft, und diese eintragen.
+  dann ihrerseits `SW.close(bue_id)` aufruft, und diese eintragen.
 
 Für den BÜ wieder freigebende Kontaktpunkte muss nur sinngemäß die Funktion
-`SW.crossingOpen(bue_id)` aufgerufen werden.
+`SW.open(bue_id)` aufgerufen werden.
 
 ### Lizenz
 [Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
@@ -187,13 +187,13 @@ call therein:
 
 - Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it
   should be possible to call the Schrankenwaerter script directly via
-  `SW.crossingClose(crossing_id)` (replacing `crossing_id` with the `ID` you
+  `SW.close(crossing_id)` (replacing `crossing_id` with the `ID` you
   chose for the crossing earlier).
 - Alternatively, you naturally can just define another function, which itself
-  calls `SW.crossingClose(crossing_id)`, and use that.
+  calls `SW.close(crossing_id)`, and use that.
 
 In contact points that should open the crossing, simply call the
-`SW.crossingOpen(crossing_id)` function instead.
+`SW.open(crossing_id)` function instead.
 
 ### Licence
 [Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
