@@ -1,5 +1,5 @@
 local SW = {
-	version = "1.0.1",
+	version = "1.1.0",
 	crossings = {},
 	observe = {}
 }
@@ -194,42 +194,108 @@ function SW.process_queue(crossing_id)
 	return true
 end
 
+---Description of the save format.
+local SAVE_FORMAT = {
+	version = 1,
+	trains = 2,	-- Index of the trains counter.
+	sleep = 3,	-- Index of the sleep counter.
+	step = 4,	-- Index of the number of the next step to execute.
+	queue = 5,	-- Index of the routine queue items.
+	delimiter = ",",		-- Char separating the indices.
+	delimiter_queue = "-"	-- Char separating the routine queue items.
+}
+
 ---Tries to save a crossing's current rundata. If the `EEPSaveData` function is
 ---not available or the user hasn't alotted a save slot for the given crossing,
----the save fails.
+---the save fails. The different components of the data saved are formatted
+---according to the `SAVE_FORMAT`.
 ---@param crossing_id integer|string: ID of the target crossing.
 function UTILS.save_rundata(crossing_id)
 	local crossing = SW.crossings[crossing_id]
-	if crossing.slot ~= nil and EEPSaveData then
-		EEPSaveData(crossing.slot, crossing.rundata.trains)
-	end
+	if crossing.slot == nil or not EEPSaveData then return end
 
+	local rundata = crossing.rundata
+	local to_save = {
+		[SAVE_FORMAT.version] = SW.version,
+		[SAVE_FORMAT.trains] = rundata.trains,
+		[SAVE_FORMAT.sleep] = rundata.sleep,
+		[SAVE_FORMAT.step] = rundata.step,
+		[SAVE_FORMAT.queue] = table.concat(rundata.queue,
+				SAVE_FORMAT.delimiter_queue)
+	}
+	EEPSaveData(crossing.slot, table.concat(to_save, SAVE_FORMAT.delimiter))
 end
 
 ---Tries to load a crossing's saved rundata. If the `EEPLoadData` function is
 ---not available or the user hasn't alotted a save slot for the given crossing,
----the load fails, returning the standard values.
+---the load fails, returning standard values. The loaded string is split into
+---its components (as determined by the `SAVE_FORMAT`) and returned packed into
+---a rundata table.
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@return Rundata: The loaded rundata, or standard values if loading failed.
 function UTILS.load_rundata(crossing_id)
 	local crossing = SW.crossings[crossing_id]
-	if crossing.slot ~= nil and EEPLoadData then
-		local save_exists, saved_trains = EEPLoadData(crossing.slot)
-		if save_exists then
-			return {
-				queue = {},
-				sleep = 0,
-				step = 1,
-				trains = saved_trains
-			}
+	if crossing.slot == nil or not EEPLoadData then
+		return {
+			queue = {},
+			sleep = 0,
+			step = 1,
+			trains = 0
+		}
+	end
+
+	-- Split up the different components of the saved data
+	local parts = UTILS.split_string(SAVE_FORMAT.delimiter,
+			select(-1, EEPLoadData(crossing.slot)))
+
+	-- Backwards compatibility for v1.0.0, which only saved num of trains
+	if #parts == 1 then
+		return {
+			trains = tonumber(parts[1]) or 0,
+			sleep = 0,
+			step = 1,
+			queue = {}
+		}
+	end
+
+	-- Extract the routine queue from the string segment
+	local queue = {}
+	if parts[SAVE_FORMAT.queue] ~= "" then
+		local ids = UTILS.split_string(SAVE_FORMAT.delimiter_queue,
+				parts[SAVE_FORMAT.queue])
+		for index, routine_id in pairs(ids) do
+			queue[index] = tonumber(routine_id)
 		end
 	end
+
+	-- Convert everything to numerical values and return it as a rundata table
 	return {
-		queue = {},
-		sleep = 0,
-		step = 1,
-		trains = 0
+		trains = tonumber(parts[SAVE_FORMAT.trains]) or 0,
+		sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0,
+		step = tonumber(parts[SAVE_FORMAT.step]) or 1,
+		queue = queue
 	}
+end
+
+---Utility function for splitting a string at the given delimiting character.
+---@param delimiter string: The **single** character to split at.
+---@param to_split string: The string to split.
+---@return table<integer, string>: The substrings the string was split into.
+function UTILS.split_string(delimiter, to_split)
+	to_split = tostring(to_split)
+	local parts = {}
+	local part = ""
+	for i = 1, #to_split do
+		local letter = to_split:sub(i, i)
+		if letter == delimiter then
+			table.insert(parts, part)
+			part = ""
+		else
+			part = part..letter
+		end
+	end
+	if #part > 0 then table.insert(parts, part) end
+	return parts
 end
 
 ---Utility function for checking whether an array contains a specific item.

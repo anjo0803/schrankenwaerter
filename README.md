@@ -55,11 +55,12 @@ Struktur beschrieben werden:
 }
 ```
 Das Feld "slot" ist dabei optional: Sie können darin dem BÜ einen der
-EEPSaveData-Slots zuweisen. Dieser wird dann genutzt, um die Anzahl der Züge zu
-speichern, die den BÜ momentan befahren, sodass diese Daten nicht beim Neuladen
-des Skripts oder der Anlage verloren gehen. Die `ID` können Sie beliebig wählen
-(bspw `"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in
-diesem Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
+EEPSaveData-Slots zuweisen. Dieser wird dann genutzt, um Ausführungsdaten für
+den BÜ (bspw. Anzahl der nahenden Züge oder den als nächstes auszuführenden
+Befehl) zu speichern, sodass diese Daten nicht beim Neuladen des Skripts oder
+der Anlage verloren gehen. Die `ID` können Sie beliebig wählen (bspw
+`"bue_beispielstr"` oder einfach numerisch `1`) oder auch auslassen - in diesem
+Fall wird der entsprechende BÜ von Lua automatisch numerisch indexiert.
 
 #### Befehle
 Die BÜ-Steuerung des Schrankenwärter-Skripts erfolgt durch "Befehle". Den
@@ -154,11 +155,12 @@ described in the following structure:
 }
 ```
 The "slot" field is optional: Within it, you may assign one of the EEPSaveData
-slots to the crossing. This will then be used to save the number of trains
-currently approaching the crossing, so that data isn't lost during reloads of
-the script or your whole railway system. You are also free to choose the `ID`
-(e.g. `"crossing_example_st"` or just numerically `1`) or leave it out
-entirely, in which case Lua will automatically index it numerically.
+slots to the crossing. This will then be used to save the crossing's execution
+data (e.g. number of trains approaching the crossing or the command to execute
+next), so that this isn't lost during reloads of the script or your whole
+railway system. You are also free to choose the `ID` (e.g.
+`"crossing_example_st"` or just numerically `1`) or leave it out entirely, in
+which case Lua will automatically index it numerically.
 
 #### Commands
 Crossings are controlled by the Schrankenwaerter script via "commands". A list
