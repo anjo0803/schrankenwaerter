@@ -1,5 +1,5 @@
 local SW = {
-	version = "1.1.0",
+	version = "1.1.1",
 	crossings = {},
 	observe = {}
 }
@@ -239,46 +239,40 @@ end
 ---@return Rundata: The loaded rundata, or standard values if loading failed.
 function UTILS.load_rundata(crossing_id)
 	local crossing = SW.crossings[crossing_id]
-	if crossing.slot == nil or not EEPLoadData then
-		return {
-			queue = {},
-			sleep = 0,
-			step = 1,
-			trains = 0
-		}
-	end
+	local ret = {
+		queue = {},
+		sleep = 0,
+		step = 1,
+		trains = 0
+	}
+	if crossing.slot == nil or not EEPLoadData then return ret end
+
+	local save_exists, saved_data = EEPLoadData(crossing.slot)
+	if not save_exists then return ret end
 
 	-- Split up the different components of the saved data
-	local parts = UTILS.split_string(SAVE_FORMAT.delimiter,
-			select(-1, EEPLoadData(crossing.slot)))
+	local parts = UTILS.split_string(SAVE_FORMAT.delimiter, saved_data)
 
 	-- Backwards compatibility for v1.0.0, which only saved num of trains
-	if #parts == 1 then
-		return {
-			trains = tonumber(parts[1]) or 0,
-			sleep = 0,
-			step = 1,
-			queue = {}
-		}
+	if #parts ~= 5 then
+		ret.trains = tonumber(parts[1]) or 0
+		return ret
 	end
 
 	-- Extract the routine queue from the string segment
-	local queue = {}
 	if parts[SAVE_FORMAT.queue] ~= "" then
 		local ids = UTILS.split_string(SAVE_FORMAT.delimiter_queue,
 				parts[SAVE_FORMAT.queue])
 		for index, routine_id in pairs(ids) do
-			queue[index] = tonumber(routine_id)
+			ret.queue[index] = tonumber(routine_id)
 		end
 	end
 
 	-- Convert everything to numerical values and return it as a rundata table
-	return {
-		trains = tonumber(parts[SAVE_FORMAT.trains]) or 0,
-		sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0,
-		step = tonumber(parts[SAVE_FORMAT.step]) or 1,
-		queue = queue
-	}
+	ret.trains = tonumber(parts[SAVE_FORMAT.trains]) or 0
+	ret.sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0
+	ret.step = tonumber(parts[SAVE_FORMAT.step]) or 1
+	return ret
 end
 
 ---Utility function for splitting a string at the given delimiting character.
