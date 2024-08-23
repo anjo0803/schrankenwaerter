@@ -1,8 +1,8 @@
 clearlog()
 
 function EEPMain()
-	SW.main()	-- Für SW.wait-Befehl benötigt // Required for SW.wait command!
-    return 1
+	SW.main()
+	return 1
 end
 
 -- Einbindung des Skripts und Definieren einiger BÜs

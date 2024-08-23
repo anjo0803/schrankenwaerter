@@ -21,8 +21,8 @@ der Lua-Funktion `require` einbinden:
 ```lua
 SW = require("Schrankenwaerter")
 ```
-Fügen Sie bitte außerdem einen Aufruf der Funktion `SW.main()` in ihre
-`EEPMain()`-Funktion ein, damit der `SW.wait`-Befehl korrekt funktioniert:
+Rufen Sie bitte außerdem die Funktion `SW.main()` in ihrer `EEPMain()`-Funktion
+auf, damit das Schrankenwärter-Skript auch ausgeführt wird:
 ```lua
 function EEPMain()
 	SW.main()
@@ -121,8 +121,8 @@ railroad systems using the Lua `require` function:
 ```lua
 SW = require("Schrankenwaerter")
 ```
-Please also add a call to the `SW.main()` function into your `EEPMain()`
-function in order for the `SW.wait` command to function properly:
+Please also add a call to the `SW.main()` function in your `EEPMain()` function
+in order for the Schrankenwaerter script to actually be executed:
 ```lua
 function EEPMain()
 	SW.main()
