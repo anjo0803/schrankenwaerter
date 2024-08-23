@@ -1,3 +1,6 @@
+[![Installer](https://github.com/anjo0803/schrankenwaerter/actions/workflows/install.yml/badge.svg)](https://github.com/anjo0803/schrankenwaerter/releases/latest)
+[![Version](https://img.shields.io/github/v/release/anjo0803/schrankenwaerter)](https://github.com/anjo0803/schrankenwaerter/releases/latest)
+[![Licence](https://img.shields.io/github/license/anjo0803/schrankenwaerter)](https://github.com/anjo0803/schrankenwaerter/blob/main/LICENCE.txt)
 # schrankenwaerter
 > [🇩🇪](#deutsch) // [🇬🇧](#english)
 
@@ -9,12 +12,13 @@ Sounds samt Zeitpuffern dazwischen!
 
 ### Einbinden des Skripts
 Um das Schrankenwärter-Skript zu installieren, können Sie einfach
-[hier](https://github.com/anjo0803/schrankenwaerter/releases) die neueste
-`Schrankenwaerter.zip`-Datei herunterladen und mittels des EEP-Modellinstallers
-installieren. Dies platziert automatisch das Schrankenwärter-Skript im
-"LUA"-Ordner ihrer EEP-Installation. Natürlich können Sie auch die Datei
+[hier](https://github.com/anjo0803/schrankenwaerter/releases/latest) die
+neueste `Schrankenwaerter.zip`-Datei herunterladen und mittels des
+EEP-Modellinstallers installieren. Dies platziert automatisch das
+Schrankenwärter-Skript im "LUA"-Ordner ihrer EEP-Installation. Natürlich können
+Sie auch die Datei
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
-direkt herunterladen und selbst direkt im "LUA"-Ordner platzieren.
+direkt herunterladen und selbst im "LUA"-Ordner platzieren.
 
 Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript dann mittels
 der Lua-Funktion `require` einbinden:
@@ -108,9 +112,9 @@ buffers in between!
 
 ### Using the script
 To use the Schrankenwaerter script in your railroad system, you can simply
-download the latest version of `Schrankenwaerter.zip` from
-[here](https://github.com/anjo0803/schrankenwaerter/releases) and install it
-using the EEP Model Installer. This will automatically place the
+download the latest `Schrankenwaerter.zip` file
+[here](https://github.com/anjo0803/schrankenwaerter/releases/latest) and
+install it using the EEP Model Installer. This will automatically place the
 Schrankenwaerter script in the "LUA" folder of your EEP installation.
 Naturally, you can also download the
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
