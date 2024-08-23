@@ -292,7 +292,7 @@ function UTILS.split_string(delimiter, to_split)
 			part = part..letter
 		end
 	end
-	if #part > 0 then table.insert(parts, part) end
+	table.insert(parts, part)
 	return parts
 end
 
