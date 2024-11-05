@@ -25,7 +25,7 @@ der Lua-Funktion `require` einbinden:
 ```lua
 SW = require("Schrankenwaerter")
 ```
-Rufen Sie bitte außerdem die Funktion `SW.main()` in ihrer `EEPMain()`-Funktion
+Rufen Sie bitte außerdem die Funktion `SW.main()` in Ihrer `EEPMain()`-Funktion
 auf, damit das Schrankenwärter-Skript auch ausgeführt wird:
 ```lua
 function EEPMain()
@@ -121,7 +121,7 @@ Naturally, you can also download the
 file directly and place it in the "LUA" folder yourself.
 
 You can then integrate the Schrankenwaerter script into the Lua script of your
-railroad systems using the Lua `require` function:
+layouts using the Lua `require` function:
 ```lua
 SW = require("Schrankenwaerter")
 ```
@@ -159,12 +159,12 @@ described in the following structure:
 }
 ```
 The "slot" field is optional: Within it, you may assign one of the EEPSaveData
-slots to the crossing. This will then be used to save the crossing's execution
+slots to the crossing. This will then be used to save the crossing's live
 data (e.g. number of trains approaching the crossing or the command to execute
-next), so that this isn't lost during reloads of the script or your whole
-railway system. You are also free to choose the `ID` (e.g.
-`"crossing_example_st"` or just numerically `1`) or leave it out entirely, in
-which case Lua will automatically index it numerically.
+next), so that this isn't lost during reloads of the script or your layout. You
+are also free to choose the `ID` (e.g. `"crossing_example_st"` or just
+numerically `1`) or leave it out entirely, in which case Lua will automatically
+index it numerically.
 
 #### Commands
 Crossings are controlled by the Schrankenwaerter script via "commands". A list

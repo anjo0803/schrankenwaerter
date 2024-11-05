@@ -6,7 +6,7 @@ on:
 
 jobs:
   zip:
-    name: Create installer zip
+    name: Attach installer zip to release
 
     permissions:
       contents: write
@@ -43,7 +43,7 @@ jobs:
           echo EEPVersion = 10>> %INI%
           echo File001 = "Schrankenwaerter.lua","LUA\Schrankenwaerter.lua">> %INI%
 
-      - name: Copy script
+      - name: Copy script to installer folder
         shell: cmd
         run: copy Schrankenwaerter.lua Install_00\
 

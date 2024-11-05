@@ -82,13 +82,13 @@ SW.setup({
 --[[
 Es folgen jeweils eine eigene Funktion zum An- und Abmelden von Zügen an jedem
 BÜ, die in den entsprechenden Kontaktpunkten aufgerufen werden sollen. Mittels
-"Bennys Codezeile" können in dem jeweiligen Kontaktpunkt aber auch die
-Funktionen SW.crossingClose bzw. SW.crossingOpen direkt mit der relevanten
-BÜ-ID aufgerufen werden.
+"BetterContacts" können in dem jeweiligen Kontaktpunkt aber auch die Funktionen
+SW.crossingClose bzw. SW.crossingOpen direkt mit der relevanten BÜ-ID
+aufgerufen werden.
 
 The following are dedicated functions to register and de-register trains
 approaching each crossing, which should be called in the relevant contact
-points. Using "Benny's Code Line", the functions SW.crossingClose and
+points. Using "BetterContacts", the functions SW.crossingClose and
 SW.crossingOpen can be called with the relevant crossing ID in the contact
 points directly.
 ]]
@@ -101,7 +101,7 @@ function pass_simple()
 	SW.open("simple")
 end
 
-function announce_separate()
+function approach_separate()
 	SW.close("separate_signals")
 end
 
