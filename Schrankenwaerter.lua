@@ -12,6 +12,7 @@ local UTILS = {}
 ---@field slot integer: User-set ID of the EEP save slot for the crossing.
 ---@field opening function[]: User-set list of functions to call when opening.
 ---@field closing function[]: User-set list of functions to call when closing.
+---@field twice function[]: User-set list of functions to call for a double-activation.
 ---@field routines function[][]: (internal) Just contains the opening/closing.
 ---@field rundata Rundata: (internal) Current state of the crossing.
 
@@ -21,6 +22,7 @@ local UTILS = {}
 ---@field sleep integer: Number of Lua cycles the crossing is still paused for.
 ---@field queue integer[]: IDs of the currently-queued routines.
 ---@field step integer: ID of the next step to execute in the active routine.
+---@field overall integer: Total number of trains that approached in the active closure.
 
 -- Crossing Actions
 
@@ -82,7 +84,8 @@ function SW.setup(...)
 	SW.crossings = ...
 	for id, crossing in pairs(SW.crossings) do
 		-- Make routines accessible by index number
-		crossing.routines = { crossing.closing, crossing.opening }
+		crossing.routines = { crossing.closing, crossing.opening, nil }
+		if crossing.twice then crossing.routines[3] = crossing.twice end
 
 		crossing.rundata = UTILS.load_rundata(id)
 		if #crossing.rundata.queue > 0 then	-- Resume queued routines
@@ -120,14 +123,22 @@ function SW.main()
 end
 
 ---Increases the trains counter in the given crossing's rundata by `1` and
----calls the crossing's closing routine if no other train is also approaching.
+---calls the crossing's closing routine if no other train is also approaching
+---already. If the crossing is already closed but has a double-activation
+---routine defined, that is called, if it has not been already.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.close(crossing_id)
-	if SW.update_and_get_trains(crossing_id, 1) > 1 then return end
+	local crossing = SW.crossings[crossing_id]
+	crossing.rundata.overall = crossing.rundata.overall + 1
+	if SW.update_and_get_trains(crossing_id, 1) == 1 then
+		SW.queue_routine(crossing_id, 1)
+		return
+	end
 
-	SW.queue_routine(crossing_id, 1)
-	if not UTILS.array_contains(SW.observe, crossing_id) then
-		table.insert(SW.observe, crossing_id)
+	if #crossing.routines == 3 then
+		if crossing.rundata.overall == 2 then
+			SW.queue_routine(crossing_id, 3)
+		end
 	end
 end
 
@@ -135,11 +146,9 @@ end
 ---calls the crossing's opening routine if no more trains are approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.open(crossing_id)
-	if SW.update_and_get_trains(crossing_id, -1) > 0 then return end
-
-	SW.queue_routine(crossing_id, 2)
-	if not UTILS.array_contains(SW.observe, crossing_id) then
-		table.insert(SW.observe, crossing_id)
+	if SW.update_and_get_trains(crossing_id, -1) <= 0 then
+		SW.queue_routine(crossing_id, 2)
+		SW.crossings[crossing_id].rundata.overall = 0
 	end
 end
 
@@ -162,12 +171,16 @@ function SW.update_and_get_trains(crossing_id, step)
 	return crossing.rundata.trains
 end
 
----Adds a routine to a crossing's routine queue.
+---Adds a routine to a crossing's routine queue, also adding the crossing to
+---the observation list if necessary.
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@param routine_id integer: ID of the desired routine.
 function SW.queue_routine(crossing_id, routine_id)
 	table.insert(SW.crossings[crossing_id].rundata.queue, routine_id)
 	UTILS.save_rundata(crossing_id)
+	if not UTILS.array_contains(SW.observe, crossing_id) then
+		table.insert(SW.observe, crossing_id)
+	end
 end
 
 ---Works through a crossing's routine queue.
@@ -205,6 +218,7 @@ local SAVE_FORMAT = {
 	sleep = 3,	-- Index of the sleep counter.
 	step = 4,	-- Index of the number of the next step to execute.
 	queue = 5,	-- Index of the routine queue items.
+	overall = 6,	-- Index of the total current activations tracker.
 	delimiter = ",",		-- Char separating the indices.
 	delimiter_queue = "-"	-- Char separating the routine queue items.
 }
@@ -225,7 +239,8 @@ function UTILS.save_rundata(crossing_id)
 		[SAVE_FORMAT.sleep] = rundata.sleep,
 		[SAVE_FORMAT.step] = rundata.step,
 		[SAVE_FORMAT.queue] = table.concat(rundata.queue,
-				SAVE_FORMAT.delimiter_queue)
+				SAVE_FORMAT.delimiter_queue),
+		[SAVE_FORMAT.overall] = rundata.overall
 	}
 	EEPSaveData(crossing.slot, table.concat(to_save, SAVE_FORMAT.delimiter))
 end
@@ -243,7 +258,8 @@ function UTILS.load_rundata(crossing_id)
 		queue = {},
 		sleep = 0,
 		step = 1,
-		trains = 0
+		trains = 0,
+		overall = 0
 	}
 	if crossing.slot == nil or not EEPLoadData then return ret end
 
@@ -254,7 +270,7 @@ function UTILS.load_rundata(crossing_id)
 	local parts = UTILS.split_string(SAVE_FORMAT.delimiter, saved_data)
 
 	-- Backwards compatibility for v1.0.0, which only saved num of trains
-	if #parts ~= 5 then
+	if #parts == 1 then
 		ret.trains = tonumber(parts[1]) or 0
 		return ret
 	end
@@ -272,6 +288,7 @@ function UTILS.load_rundata(crossing_id)
 	ret.trains = tonumber(parts[SAVE_FORMAT.trains]) or 0
 	ret.sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0
 	ret.step = tonumber(parts[SAVE_FORMAT.step]) or 1
+	ret.overall = tonumber(parts[SAVE_FORMAT.overall]) or 0
 	return ret
 end
 
