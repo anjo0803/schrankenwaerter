@@ -1,6 +1,10 @@
 local SW = {
-	version = "1.1.1",
+	version = "1.2.0",
+
+	---@type RailroadCrossing[]
 	crossings = {},
+
+	---@type (string|integer)[]
 	observe = {}
 }
 local UTILS = {}
@@ -8,13 +12,27 @@ local UTILS = {}
 
 -- Crossing Type Definition
 
+---Helper class for setting up a railroad crossing via function-chaining.
+---@class CrossingDefiner
+---@field save function: 
+---@field opening function: 
+---@field closing function: 
+---@field twice function: 
+
+---Represents the blueprint of a railroad crossing with user-defined
+---functionality. Used exclusively during setup by passing it to the `SW.setup`
+---function.
+---@class UserCrossing
+---@field opening function[]: List of functions to call when opening.
+---@field closing function[]: List of functions to call when closing.
+---@field twice function[]: List of functions to call for a double-activation.
+---@field slot ?integer: ID of an EEP save slot to use for the crossing.
+
+---Represents a railroad crossing.
 ---@class RailroadCrossing
----@field slot integer: User-set ID of the EEP save slot for the crossing.
----@field opening function[]: User-set list of functions to call when opening.
----@field closing function[]: User-set list of functions to call when closing.
----@field twice function[]: User-set list of functions to call for a double-activation.
----@field routines function[][]: (internal) Just contains the opening/closing.
----@field rundata Rundata: (internal) Current state of the crossing.
+---@field slot? integer: User-set ID of the EEP save slot for the crossing.
+---@field routines function[][]: List of the crossing's routines.
+---@field rundata Rundata: Current state of the crossing.
 
 ---Data on a railroad crossing's current state.
 ---@class Rundata
@@ -23,6 +41,44 @@ local UTILS = {}
 ---@field queue integer[]: IDs of the currently-queued routines.
 ---@field step integer: ID of the next step to execute in the active routine.
 ---@field overall integer: Total number of trains that approached in the active closure.
+
+-- Crossing Config
+
+---Registers a new crossing with the given ID, which can then be configured by
+---chaining on the returned crossing object.
+---@param id string|number: ID with which to refer to the crossing.
+---@return CrossingDefiner: Crossing object.
+function SW.define(id)
+	SW.crossings[id] = {
+		slot = nil,
+		routines = { nil, nil, nil },
+		rundata = UTILS.new_rundata()
+	}
+	return {
+		save = function (self, slot)
+			SW.crossings[id].slot = slot
+
+			local rundata = UTILS.load_rundata(slot)
+			SW.crossings[id].rundata = rundata
+
+			-- Resume queued routines
+			if #rundata.queue > 0 then table.insert(SW.observe, id) end
+			return self
+		end,
+		opening = function (self, ...)
+			SW.crossings[id].routines[1] = {...}
+			return self
+		end,
+		closing = function (self, ...)
+			SW.crossings[id].routines[2] = {...}
+			return self
+		end,
+		twice = function (self, ...)
+			SW.crossings[id].routines[3] = {...}
+			return self
+		end
+	}
+end
 
 -- Crossing Actions
 
@@ -79,18 +135,25 @@ end
 ---Initializes the script with the given set of railroad crossing definitions,
 ---attaching the required rundata to each. If possible, any rundata saved for
 ---the crossing is loaded.
----@param ... RailroadCrossing[]: List of crossings to manage.
+---
+---**Deprecated** in favour of the `SW.define` procedure!
+---@param ... UserCrossing[]: List of crossings to manage.
+---@deprecated
 function SW.setup(...)
-	SW.crossings = ...
-	for id, crossing in pairs(SW.crossings) do
-		-- Make routines accessible by index number
-		crossing.routines = { crossing.closing, crossing.opening, nil }
-		if crossing.twice then crossing.routines[3] = crossing.twice end
+	SW.crossings = {}
+	for id, crossing in pairs(...) do
+		-- Convert the UserCrossing into a RailroadCrossing
+		local converted = {
+			slot = crossing.slot,
+			rundata = UTILS.load_rundata(crossing.slot),
+			routines = { crossing.opening, crossing.closing, nil }
+		}
+		if crossing.twice then converted.routines[3] = crossing.twice end
 
-		crossing.rundata = UTILS.load_rundata(id)
-		if #crossing.rundata.queue > 0 then	-- Resume queued routines
-			table.insert(SW.observe, id)
-		end
+		-- Resume queued routines
+		if #converted.rundata.queue > 0 then table.insert(SW.observe, id) end
+
+		SW.crossings[id] = converted
 	end
 	print("Schrankenwaerter ", SW.version, " set up!")
 end
@@ -109,7 +172,7 @@ function SW.main()
 		if rundata.sleep > 0 then
 			rundata.sleep = rundata.sleep - 1
 		elseif #rundata.queue > 0 then
-			local finished = SW.process_queue(crossing_id)
+			local finished = UTILS.process_queue(crossing_id)
 			if finished then table.insert(to_remove, index) end
 		else
 			table.insert(to_remove, index)
@@ -130,12 +193,12 @@ end
 function SW.close(crossing_id)
 	local crossing = SW.crossings[crossing_id]
 	crossing.rundata.overall = crossing.rundata.overall + 1
-	if SW.update_and_get_trains(crossing_id, 1) == 1 then
-		SW.queue_routine(crossing_id, 1)
+	if UTILS.update_and_get_trains(crossing_id, 1) == 1 then
+		SW.queue_routine(crossing_id, 2)
 		return
 	end
 
-	if #crossing.routines == 3 then
+	if crossing.routines[3] ~= nil then
 		if crossing.rundata.overall == 2 then
 			SW.queue_routine(crossing_id, 3)
 		end
@@ -146,14 +209,16 @@ end
 ---calls the crossing's opening routine if no more trains are approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.open(crossing_id)
-	if SW.update_and_get_trains(crossing_id, -1) <= 0 then
-		SW.queue_routine(crossing_id, 2)
+	if UTILS.update_and_get_trains(crossing_id, -1) <= 0 then
+		SW.queue_routine(crossing_id, 1)
 		SW.crossings[crossing_id].rundata.overall = 0
 	end
 end
 
 -- Backwards compatibility for v1.0.0
+---@deprecated
 function SW.crossingClose(crossing_id) SW.close(crossing_id) end
+---@deprecated
 function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 
 ---Adds the given number to the trains counter of the given crossing and tries
@@ -161,7 +226,7 @@ function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@param step 1 | -1: Number to add to the trains counter.
 ---@return integer: The updated trains counter of the crossing.
-function SW.update_and_get_trains(crossing_id, step)
+function UTILS.update_and_get_trains(crossing_id, step)
 	local crossing = SW.crossings[crossing_id]
 	crossing.rundata.trains = crossing.rundata.trains + step
 	if crossing.rundata.trains < 0 then crossing.rundata.trains = 0 end
@@ -193,7 +258,7 @@ end
 ---after another until the queue is completely cleared.
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@return boolean: `true` if the queue got wholly cleared, otherwise `false`.
-function SW.process_queue(crossing_id)
+function UTILS.process_queue(crossing_id)
 	local crossing = SW.crossings[crossing_id]
 	while #crossing.rundata.queue > 0 do
 		local active = crossing.routines[crossing.rundata.queue[1]]
@@ -223,6 +288,18 @@ local SAVE_FORMAT = {
 	delimiter_queue = "-"	-- Char separating the routine queue items.
 }
 
+---Creates `Rundata` with standard values.
+---@return Rundata: The created `Rundata`.
+function UTILS.new_rundata()
+	return {
+		queue = {},
+		sleep = 0,
+		step = 1,
+		trains = 0,
+		overall = 0
+	}
+end
+
 ---Tries to save a crossing's current rundata. If the `EEPSaveData` function is
 ---not available or the user hasn't alotted a save slot for the given crossing,
 ---the save fails. The different components of the data saved are formatted
@@ -245,25 +322,18 @@ function UTILS.save_rundata(crossing_id)
 	EEPSaveData(crossing.slot, table.concat(to_save, SAVE_FORMAT.delimiter))
 end
 
----Tries to load a crossing's saved rundata. If the `EEPLoadData` function is
----not available or the user hasn't alotted a save slot for the given crossing,
----the load fails, returning standard values. The loaded string is split into
----its components (as determined by the `SAVE_FORMAT`) and returned packed into
----a rundata table.
----@param crossing_id integer|string: ID of the target crossing.
+---Tries to load saved rundata. If the `EEPLoadData` function is not available
+---or the user hasn't alotted a save slot for the given crossing, the load
+---fails, returning standard values. The loaded string is split into its
+---components (as determined by the `SAVE_FORMAT`) and returned packed into a
+---rundata table.
+---@param slot integer: ID of the EEP save slot to load from.
 ---@return Rundata: The loaded rundata, or standard values if loading failed.
-function UTILS.load_rundata(crossing_id)
-	local crossing = SW.crossings[crossing_id]
-	local ret = {
-		queue = {},
-		sleep = 0,
-		step = 1,
-		trains = 0,
-		overall = 0
-	}
-	if crossing.slot == nil or not EEPLoadData then return ret end
+function UTILS.load_rundata(slot)
+	local ret = UTILS.new_rundata()
+	if not EEPLoadData then return ret end
 
-	local save_exists, saved_data = EEPLoadData(crossing.slot)
+	local save_exists, saved_data = EEPLoadData(slot)
 	if not save_exists then return ret end
 
 	-- Split up the different components of the saved data
