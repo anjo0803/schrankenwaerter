@@ -56,5 +56,5 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           file: Installable.zip
-          asset_name: Schrankenwaerter_$tag.zip
+          asset_name: Schrankenwaerter.zip
           repo_token: ${{ secrets.GITHUB_TOKEN }}
