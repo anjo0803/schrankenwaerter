@@ -76,16 +76,49 @@ function SW.define(id)
 		twice = function (self, ...)
 			SW.crossings[id].routines[3] = {...}
 			return self
-		end
+		end,
+
+		-- German function names
+		speichern = function(self, slot) return self:save(slot) end,
+		oeffnen = function(self, ...) return self:opening(...) end,
+		schliessen = function(self, ...) return self:closing(...) end,
+		doppelt = function(self, ...) return self:twice(...) end
 	}
 end
+
+---Initializes the script with the given set of railroad crossing definitions,
+---attaching the required rundata to each. If possible, any rundata saved for
+---the crossing is loaded.
+---
+---**Deprecated** in favour of the `SW.define` procedure!
+---@param ... UserCrossing[]: List of crossings to manage.
+---@deprecated
+function SW.setup(...)
+	SW.crossings = {}
+	for id, crossing in pairs(...) do
+		-- Convert the UserCrossing into a RailroadCrossing
+		local converted = {
+			slot = crossing.slot,
+			rundata = UTILS.load_rundata(crossing.slot),
+			routines = { crossing.opening, crossing.closing, nil }
+		}
+		if crossing.twice then converted.routines[3] = crossing.twice end
+
+		-- Resume queued routines
+		if #converted.rundata.queue > 0 then table.insert(SW.observe, id) end
+
+		SW.crossings[id] = converted
+	end
+	print("Schrankenwaerter ", SW.version, " set up!")
+end
+
 
 -- Crossing Actions
 
 ---Pauses a crossing's active routine for the given number of Lua cycles.
 ---@param duration integer: Number of Lua cycles to wait.
 ---@return function: Function that will be called when executing the routine.
-function SW.wait(duration)
+function SW.pause(duration)
 	return function(crossing_id)
 		SW.crossings[crossing_id].rundata.sleep = duration
 		if not UTILS.array_contains(SW.observe, crossing_id) then
@@ -94,6 +127,13 @@ function SW.wait(duration)
 		return false
 	end
 end
+
+---Pauses a crossing's active routine for the given number of Lua cycles.
+---Deprecated in favour of SW.pause
+---@param duration integer: Number of Lua cycles to wait.
+---@return function: Function that will be called when executing the routine.
+---@deprecated
+function SW.wait(duration) return SW.pause(duration) end
 
 ---Set the given signal to the given position.
 ---@param signal_id integer: ID of the target signal.
@@ -132,31 +172,8 @@ function SW.sound(sound_id, turn_on)
 	end
 end
 
----Initializes the script with the given set of railroad crossing definitions,
----attaching the required rundata to each. If possible, any rundata saved for
----the crossing is loaded.
----
----**Deprecated** in favour of the `SW.define` procedure!
----@param ... UserCrossing[]: List of crossings to manage.
----@deprecated
-function SW.setup(...)
-	SW.crossings = {}
-	for id, crossing in pairs(...) do
-		-- Convert the UserCrossing into a RailroadCrossing
-		local converted = {
-			slot = crossing.slot,
-			rundata = UTILS.load_rundata(crossing.slot),
-			routines = { crossing.opening, crossing.closing, nil }
-		}
-		if crossing.twice then converted.routines[3] = crossing.twice end
 
-		-- Resume queued routines
-		if #converted.rundata.queue > 0 then table.insert(SW.observe, id) end
-
-		SW.crossings[id] = converted
-	end
-	print("Schrankenwaerter ", SW.version, " set up!")
-end
+-- Main functionality
 
 ---The periodically-called heartbeat of the script! Checks all crossings that
 ---are currently being observed. Ones that are paused have their sleep counter
@@ -221,6 +238,11 @@ function SW.crossingClose(crossing_id) SW.close(crossing_id) end
 ---@deprecated
 function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 
+-- German function names
+function SW.definiere(id) return SW.define(id) end
+function SW.schliesse(bue_id) SW.close(bue_id) end
+function SW.oeffne(bue_id) SW.open(bue_id) end
+
 ---Adds the given number to the trains counter of the given crossing and tries
 ---to save the thusly updated rundata.
 ---@param crossing_id integer|string: ID of the target crossing.
@@ -234,18 +256,6 @@ function UTILS.update_and_get_trains(crossing_id, step)
 	UTILS.save_rundata(crossing_id)
 
 	return crossing.rundata.trains
-end
-
----Adds a routine to a crossing's routine queue, also adding the crossing to
----the observation list if necessary.
----@param crossing_id integer|string: ID of the target crossing.
----@param routine_id integer: ID of the desired routine.
-function SW.queue_routine(crossing_id, routine_id)
-	table.insert(SW.crossings[crossing_id].rundata.queue, routine_id)
-	UTILS.save_rundata(crossing_id)
-	if not UTILS.array_contains(SW.observe, crossing_id) then
-		table.insert(SW.observe, crossing_id)
-	end
 end
 
 ---Works through a crossing's routine queue.
@@ -275,6 +285,21 @@ function UTILS.process_queue(crossing_id)
 	end
 	return true
 end
+
+---Adds a routine to a crossing's routine queue, also adding the crossing to
+---the observation list if necessary.
+---@param crossing_id integer|string: ID of the target crossing.
+---@param routine_id integer: ID of the desired routine.
+function SW.queue_routine(crossing_id, routine_id)
+	table.insert(SW.crossings[crossing_id].rundata.queue, routine_id)
+	UTILS.save_rundata(crossing_id)
+	if not UTILS.array_contains(SW.observe, crossing_id) then
+		table.insert(SW.observe, crossing_id)
+	end
+end
+
+
+-- Saving functionality
 
 ---Description of the save format.
 local SAVE_FORMAT = {
@@ -361,6 +386,9 @@ function UTILS.load_rundata(slot)
 	ret.overall = tonumber(parts[SAVE_FORMAT.overall]) or 0
 	return ret
 end
+
+
+-- Utility
 
 ---Utility function for splitting a string at the given delimiting character.
 ---@param delimiter string: The **single** character to split at.
