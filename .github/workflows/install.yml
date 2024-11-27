@@ -1,4 +1,4 @@
-name: installer
+name: installable
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   zip:
-    name: Attach installer zip to release
+    name: Create and Attach Installable ZIP
 
     permissions:
       contents: write
@@ -16,44 +16,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Create EEP file
+      - name: Create Installable ZIP
         shell: cmd
-        run: |
-          @echo off
-          cmd /a
-          chcp 65001
-          set EEP=Installation.eep
-          set VER=${{ github.event.release.tag_name }}
-          echo [Install_00]> %EEP%
-          echo Name_GER = "Schrankenwaerter %VER%">> %EEP%
-          echo Name_ENG = "Schrankenwaerter %VER%">> %EEP%
-          echo Name_FRA = "Schrankenwaerter %VER%">> %EEP%
-          echo Name_POL = "Schrankenwaerter %VER%">> %EEP%
-          echo Desc_GER = "Lua-Skript zum Steuern von Bahnübergängen.">> %EEP%
-          echo Desc_ENG = "Lua script for controlling railroad crossings.">> %EEP%
-          echo Desc_FRA = "Script Lua pour le commande des passages à niveau.">> %EEP%
-          echo Desc_POL = "Skrypt Lua do kontrolowania przejazdów kolejowych.">> %EEP%
-          echo Script = "Install_00\Install.ini">> %EEP%
+        run: CreateInstallable.bat ${{ github.event.release.tag_name }}
 
-      - name: Create Install.ini
-        shell: cmd
-        run: |
-          @echo off
-          mkdir Install_00
-          set INI=.\Install_00\Install.ini
-          echo [EEPInstall]> %INI%
-          echo EEPVersion = 10>> %INI%
-          echo File001 = "Schrankenwaerter.lua","LUA\Schrankenwaerter.lua">> %INI%
-
-      - name: Copy script to installer folder
-        shell: cmd
-        run: copy Schrankenwaerter.lua Install_00\
-
-      - name: Zip files
-        shell: cmd
-        run: 7z a -tzip Installable.zip Installation.eep Install_00
-
-      - name: Attach zip
+      - name: Attach ZIP to Release
         uses: svenstaro/upload-release-action@v2
         with:
           file: Installable.zip
