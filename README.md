@@ -15,7 +15,7 @@ Um das Schrankenwärter-Skript zu installieren, können Sie einfach
 [hier](https://github.com/anjo0803/schrankenwaerter/releases/latest/download/Schrankenwaerter.zip)
 die neueste `Schrankenwaerter.zip`-Datei herunterladen und dann mittels des
 EEP-Modellinstallers installieren. Dies platziert automatisch das
-Schrankenwärter-Skript im "LUA"-Ordner ihrer EEP-Installation. Alternativ
+Schrankenwärter-Skript im "LUA"-Ordner Ihrer EEP-Installation. Alternativ
 können Sie auch die Datei
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
 direkt herunterladen und manuell im "LUA"-Ordner platzieren.
@@ -94,7 +94,7 @@ von Ihnen zuvor gewählte ID des jeweils anzusteuernden BÜs einsetzen.
 
 Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) sollte
 es möglich sein, diese Funktionen direkt aus den zu setzenden Kontaktpunkten
-heraus auszurufen. Ansonsten können Sie natürlich für jeden BÜ eigene
+heraus aufzurufen. Ansonsten können Sie natürlich für jeden BÜ eigene
 Funktionen definieren, die dann ihrerseits die Schrankenwärter-Funktionen mit
 der korrekten BÜ-ID aufrufen.
 
