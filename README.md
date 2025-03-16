@@ -11,22 +11,21 @@ komplexen Systemen aus vielen separaten Lichtzeichen, Schranken, Immobilien und
 Sounds samt Zeitpuffern dazwischen!
 
 ### Einbinden des Skripts
-Um das Schrankenwärter-Skript zu installieren, können Sie einfach
+Um das Schrankenwärter-Skript zu installieren, kannst Du einfach
 [hier](https://github.com/anjo0803/schrankenwaerter/releases/latest/download/Schrankenwaerter.zip)
 die neueste `Schrankenwaerter.zip`-Datei herunterladen und dann mittels des
-EEP-Modellinstallers installieren. Dies platziert automatisch das
-Schrankenwärter-Skript im "LUA"-Ordner Ihrer EEP-Installation. Alternativ
-können Sie auch die Datei
+EEP-Modellinstallers installieren. Dadurch wird das Skript automatisch im
+"LUA"-Ordner Deiner EEP-Installation platziert. Alternativ kann auch die Datei
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
-direkt herunterladen und manuell im "LUA"-Ordner platzieren.
+direkt heruntergeladen und manuell im "LUA"-Ordner gespeichert werden.
 
-Im Lua-Skript Ihrer Anlagen können Sie das Schrankenwärter-Skript dann mittels
-der Lua-Funktion `require` einbinden:
+Im Lua-Skript der Anlagen kann das Skript dann durch die Lua-Funktion `require`
+eingebunden werden:
 ```lua
 SW = require("Schrankenwaerter")
 ```
-Rufen Sie bitte außerdem die Funktion `SW.main()` in Ihrer `EEPMain()`-Funktion
-auf, damit das Schrankenwärter-Skript auch ausgeführt wird:
+Außerdem muss die Funktion `SW.main()` in der `EEPMain()`-Funktion aufgerufen
+werden, damit das Skript auch tatsächlich ausgeführt wird:
 ```lua
 function EEPMain()
 	SW.main()
@@ -35,46 +34,44 @@ end
 ```
 
 ### Konfigurieren eines BÜs
-Ihre Bahnübergänge können Sie nach Einbindung des Schrankenwärter-Skripts
-jeweils mit der Funktion `SW.define`/`SW.definiere` - die meisten Funktionen
-können sowohl über einen englischen als auch einen deutschen Namen aufgerufen
-werden - definieren. Dabei müssen Sie dem BÜ eine ID geben, über die Sie ihn
-dann später ansteuern können.
+Bahnübergänge kannst Du nach Einbindung des Skripts jeweils einzeln mit der
+Funktion `SW.define` bzw. `SW.definiere` konfigurieren - die meisten Funktionen
+des Skripts haben sowohl einen englischen als auch einen deutschen Namen. Dabei
+muss dem BÜ zuerst eine ID gegeben werden, über die er im folgenden angesteuert
+werden soll.
 ```lua
-SW.definiere("Beispiel-BÜ")
+SW.definiere("Beispiel-Bue")
 ```
-Alle weiteren für die Steuerung relevanten Daten werden direkt dahinter in
-zusätzlichen Funktionen beschrieben.
+Direkt danach kannst Du die gewünschten Eigenschaften des BÜ beschreiben.
 
 #### Zuweisen von Speicher-Slots
-Optional können Sie dem BÜ einen der EEPSaveData-Slots zuweisen. Dieser wird
-dann genutzt, um Zustandsdaten des BÜs (bspw. Anzahl der nahenden Züge) zu
-speichern, sodass diese nicht beim Neuladen des Skripts oder der Anlage
-verloren gehen.
+Optional lässt sich jedem BÜ ein EEPSaveData-Slot zuweisen. Dieser wird dann
+genutzt, um Zustandsdaten des BÜs (bspw. Anzahl der nahenden Züge) zu sichern,
+sodass diese nicht beim Neuladen des Skripts oder der Anlage verloren gehen.
 ```lua
-SW.definiere("Beispiel-BÜ")
+SW.definiere("Beispiel-Bue")
 	:speichern(1)
 ```
 
-#### Befehle
-Mit den Funktionen `:schliessen` und `:oeffnen` der BÜ-Definition können Sie
-detailliert beschreiben, wie genau der Öffnungs- und Schließvorgang des
-jeweiligen BÜs aussehen soll. Optional steht noch die Funktion `:doppelt`
-zur Verfügung, wenn Sie für den Fall, dass ein zweiter Zug den bereits
-geschlossenen BÜ aktiviert, weitere Aktionen ausführen wollen, bspw. die
-Aktivierung der Leuchtschrift an einem "2 Züge"-Blinklicht.
+#### Schließ- und Öffnungsvorgang
+Den Kern der BÜ-Konfiguration bilden Schließ- und Öffnungsvorgang, die über
+die Funktionen `:schliessen` bzw. `oeffnen` eingestellt werden. Darin kannst
+Du mittels einer Kette von "Befehlen" detailliert beschreiben, wie diese
+Vorgänge konkret ablaufen sollen.
+
+<!-- Optional steht noch die Funktion `:doppelt`
+zur Verfügung, wenn für den Fall, dass ein zweiter Zug sich dem bereits
+geschlossenen BÜ nähert, weitere Aktionen ausgeführt werden sollen (bspw.
+Aktivierung der Leuchtschrift an einem "2 Züge"-Blinklicht). -->
 ```lua
-SW.definiere("Beispiel-BÜ")
+SW.definiere("Beispiel-Bue")
 	:speichern(1)
 	:schliessen(befehl1, befehl2, ...)
 	:oeffnen(befehl1, befehl2, ...)
-	:doppelt(befehl1, befehl2, ...)
 ```
 
-Diese drei Funktionen benötigen jeweils eine Liste von "Befehlen", die während
-des jeweiligen Vorgangs nacheinander abgearbeitet werden. Dies kann bspw. der
-Befehl sein, ein Signal umzuschalten oder einen Sound ein- oder auszuschalten.
-Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
+Die angegebenen Befehle werden während des jeweiligen Vorgangs nacheinander
+abgearbeitet. Momentan stehen folgende Befehle zur Verfügung:
 | Name | Effekt | Parameter |
 |-|-|-|
 | `SW.signal(signal_id, stellung)` | Setzt ein Signal in eine Stellung. | `signal_id`: ID des Signals, das gesetzt werden soll.<br>`stellung`: ID der Stellung, in die das Signal gesetzt werden soll. |
@@ -82,24 +79,50 @@ Momentan werden folgende Befehle vom Skript selbst bereitgestellt:
 | `SW.sound(sound_id, anschalten)` | Schaltet einen Sound an oder aus. | `sound_id`: Lua-Name des Ziel-Sounds.<br>`anschalten`: `true`, um den Sound anzuschalten; `false`, um ihn auszuschalten. |
 | `SW.pause(zyklen)` | Pausiert die Befehlsausführung. | `zyklen`: Anzahl der Lua-Zyklen, für die die Ausführung ruhen soll. Ein Zyklus entspricht einem Aufruf der `SW.main()`-Funktion, d.h. wenn diese in jedem Aufruf der `EEPMain()`-Funktion aufgerufen wird, dauert jeder Zyklus 200ms. |
 
+#### Doppelaktivierung
+Neben `:schliessen` und `:oeffnen` lässt sich optional ein Vorgang definieren,
+der ausgeführt werden soll, wenn ein zweiter Zug sich am bereits geschlossenen
+BÜ anmeldet. So lässt sich bspw. die Aktivierung einer "2 ZÜGE"-Leuchtschrift
+verwirklichen. Ein solcher Vorgang wird über die Funktion `:doppelt` definiert,
+wobei wie bei Schließ- und Öffnungsvorgang Befehle benutzt werden:
+```lua
+SW.definiere("Beispiel-Bue")
+	:speichern(1)
+	:schliessen(befehl1, befehl2, ...)
+	:oeffnen(befehl1, befehl2, ...)
+	:doppelt(befehl1, befehl2, ...)
+```
+
 #### Beispiele
-Beispielkonfigurationen für BÜs können Sie
-[hier](https://github.com/anjo0803/schrankenwaerter/blob/main/Examples.lua)
-finden. *Anm.: Die Beispiele nutzen die englischen Namen der Funktionen.*
+Beispielkonfigurationen für BÜs gibt es
+[hier](https://github.com/anjo0803/schrankenwaerter/blob/main/Examples.lua)!
+*Anm.: Die Beispiele nutzen die englischen Namen der Funktionen.*
 
 ### Kontaktpunkte
-Die An- und Abmeldung von Zügen an BÜs geschieht über die Funktionen
-`SW.schliesse(bue_id)` und `SW.oeffne(bue_id)`. Für `bue_id` müssen Sie die
-von Ihnen zuvor gewählte ID des jeweils anzusteuernden BÜs einsetzen.
+Um einen BÜ dann tatsächlich zu schließen und zu öffnen, müssen sich Züge
+einfach über die Funktionen `SW.schliesse(bue_id)` und `SW.oeffne(bue_id)` am
+BÜ an- bzw. abmelden Die `bue_id` entspricht dabei der zuvor von Dir gewählten
+BÜ-ID.
 
-Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) sollte
-es möglich sein, diese Funktionen direkt aus den zu setzenden Kontaktpunkten
-heraus aufzurufen. Ansonsten können Sie natürlich für jeden BÜ eigene
-Funktionen definieren, die dann ihrerseits die Schrankenwärter-Funktionen mit
-der korrekten BÜ-ID aufrufen.
+Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) ist es
+möglich, diese Funktionen direkt aus Kontaktpunkten heraus aufzurufen.
+Ansonsten müssen für jeden BÜ spezifische Funktionen eingefügt werden, die dann
+ihrerseits die Schrankenwärter-Funktionen aufrufen:
+```lua
+function schliesse_beispiel()
+	SW.schliesse("Beispiel-Bue")
+end
+function oeffne_beispiel()
+	SW.oeffne("Beispiel-Bue")
+end
+```
+
+Natürlich können die Öffnungs- und Schließungsfunktionen auch außerhalb von
+Kontaktpunkten, bspw. an anderer Stelle des Anlagen-Skripts, aufgerufen werden.
 
 ### Lizenz
-[Gemeinfrei kraft der Unlicense.](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
+Ich habe das Skript für faktisch gemeinfrei erklärt
+([Unlicense](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)).
 
 ## English
 **Schrankenwaerter** is a Lua script for controlling railroad crossings in the
@@ -108,22 +131,22 @@ setups of many separate lights, barriers, structures, and sounds plus time
 buffers in between!
 
 ### Using the script
-To use the Schrankenwaerter script in your railroad system, you can simply
-download the latest `Schrankenwaerter.zip` file
+To use the Schrankenwaerter script in your layouts, you can simply download the
+latest `Schrankenwaerter.zip` file
 [here](https://github.com/anjo0803/schrankenwaerter/releases/latest/download/Schrankenwaerter.zip)
 and install it using the EEP Model Installer. This will automatically place the
-Schrankenwaerter script in the "LUA" folder of your EEP installation.
-Alternatively, you can also download the
+script in the "LUA" folder of your EEP installation. Alternatively, you can
+also download the
 [`Schrankenwaerter.lua`](https://github.com/anjo0803/schrankenwaerter/blob/main/Schrankenwaerter.lua)
 file directly and place it in the "LUA" folder yourself.
 
-You can then integrate the Schrankenwaerter script into the Lua script of your
-layouts using the Lua `require` function:
+You can then integrate the Schrankenwaerter script into the Lua script of a
+layout using the Lua `require` function:
 ```lua
 SW = require("Schrankenwaerter")
 ```
 Please also add a call to the `SW.main()` function in your `EEPMain()` function
-in order for the Schrankenwaerter script to actually be executed:
+in order for the script to actually be executed:
 ```lua
 function EEPMain()
 	SW.main()
@@ -190,6 +213,17 @@ Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it should
 be possible to call these functions directly from the contact points set for
 the crossing. Alternatively, you naturally can just define another function,
 which itself calls `SW.close(crossing_id)`, and use that.
+```lua
+function close_example()
+	SW.close("Example Crossing")
+end
+function open_example()
+	SW.open("Example Crossing")
+end
+```
+
+Naturally, you can also call the opening and closing functions outside of
+contact points from another part of your layout's script.
 
 ### Licence
-[Public domain (via the Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
+[Public domain (Unlicense).](https://github.com/anjo0803/schrankenwaerter/blob/main/UNLICENSE.txt)
