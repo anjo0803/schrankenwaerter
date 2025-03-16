@@ -30,16 +30,17 @@ local UTILS = {}
 
 ---Represents a railroad crossing.
 ---@class RailroadCrossing
----@field slot? integer: User-set ID of the EEP save slot for the crossing.
 ---@field routines function[][]: List of the crossing's routines.
+---@field slot? integer: ID of the EEP save slot for the crossing.
+---@field sequences function[][]: List of the crossing's sequences.
 ---@field rundata Rundata: Current state of the crossing.
 
 ---Data on a railroad crossing's current state.
 ---@class Rundata
 ---@field trains integer: Number of trains currently approaching the crossing.
 ---@field sleep integer: Number of Lua cycles the crossing is still paused for.
----@field queue integer[]: IDs of the currently-queued routines.
----@field step integer: ID of the next step to execute in the active routine.
+---@field queue integer[]: IDs of the currently-queued sequences.
+---@field step integer: ID of the next step to execute in the active sequence.
 ---@field overall integer: Total number of trains that approached in the active closure.
 
 -- Crossing Config
@@ -51,7 +52,7 @@ local UTILS = {}
 function SW.define(id)
 	SW.crossings[id] = {
 		slot = nil,
-		routines = { nil, nil, nil },
+		sequences = { nil, nil, nil },
 		rundata = UTILS.new_rundata()
 	}
 	return {
@@ -61,20 +62,20 @@ function SW.define(id)
 			local rundata = UTILS.load_rundata(slot)
 			SW.crossings[id].rundata = rundata
 
-			-- Resume queued routines
+			-- Resume queued sequences
 			if #rundata.queue > 0 then table.insert(SW.observe, id) end
 			return self
 		end,
 		opening = function (self, ...)
-			SW.crossings[id].routines[1] = {...}
+			SW.crossings[id].sequences[1] = {...}
 			return self
 		end,
 		closing = function (self, ...)
-			SW.crossings[id].routines[2] = {...}
+			SW.crossings[id].sequences[2] = {...}
 			return self
 		end,
 		twice = function (self, ...)
-			SW.crossings[id].routines[3] = {...}
+			SW.crossings[id].sequences[3] = {...}
 			return self
 		end,
 
@@ -115,9 +116,9 @@ end
 
 -- Crossing Actions
 
----Pauses a crossing's active routine for the given number of Lua cycles.
+---Pauses a crossing's active sequence for the given number of Lua cycles.
 ---@param duration integer: Number of Lua cycles to wait.
----@return function: Function that will be called when executing the routine.
+---@return function: Function that will be called when executing the sequence.
 function SW.pause(duration)
 	return function(crossing_id)
 		SW.crossings[crossing_id].rundata.sleep = duration
@@ -138,7 +139,7 @@ function SW.wait(duration) return SW.pause(duration) end
 ---Set the given signal to the given position.
 ---@param signal_id integer: ID of the target signal.
 ---@param position integer: ID of the position to set the signal to.
----@return function: Function that will be called when executing the routine.
+---@return function: Function that will be called when executing the sequence.
 function SW.signal(signal_id, position)
 	if not EEPSetSignal then return function (_) end end
 	return function(_)
@@ -151,7 +152,7 @@ end
 ---@param immo_id string: Lua name of the target structure.
 ---@param axis string: Name of the axis to move on the structure.
 ---@param step integer: Number of steps to move the axis.
----@return function: Function that will be called when executing the routine.
+---@return function: Function that will be called when executing the sequence.
 function SW.immo(immo_id, axis, step)
 	if not EEPStructureAnimateAxis then return function (_) end end
 	return function(_)
@@ -163,7 +164,7 @@ end
 ---Turns a given sound on or off.
 ---@param sound_id string: Lua name of the target sound.
 ---@param turn_on boolean: `true` to turn the sound on, `false` to turn it off.
----@return function: Function that will be called when executing the routine.
+---@return function: Function that will be called when executing the sequence.
 function SW.sound(sound_id, turn_on)
 	if not EEPStructurePlaySound then return function (_) end end
 	return function(_)
@@ -177,7 +178,7 @@ end
 
 ---The periodically-called heartbeat of the script! Checks all crossings that
 ---are currently being observed. Ones that are paused have their sleep counter
----reduced by `1`. Others have their routine queues processed. Crossings which
+---reduced by `1`. Others have their sequence queues processed. Crossings which
 ---have worked off their whole queue and aren't sleeping anymore are removed
 ---from the list of observed crossings.
 function SW.main()
@@ -203,31 +204,31 @@ function SW.main()
 end
 
 ---Increases the trains counter in the given crossing's rundata by `1` and
----calls the crossing's closing routine if no other train is also approaching
+---queues the crossing's closing sequence if no other train is also approaching
 ---already. If the crossing is already closed but has a double-activation
----routine defined, that is called, if it has not been already.
+---sequence defined, that one is queued for the second train to approach.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.close(crossing_id)
 	local crossing = SW.crossings[crossing_id]
 	crossing.rundata.overall = crossing.rundata.overall + 1
 	if UTILS.update_and_get_trains(crossing_id, 1) == 1 then
-		SW.queue_routine(crossing_id, 2)
+		SW.queue_sequence(crossing_id, 2)
 		return
 	end
 
-	if crossing.routines[3] ~= nil then
+	if crossing.sequences[3] ~= nil then
 		if crossing.rundata.overall == 2 then
-			SW.queue_routine(crossing_id, 3)
+			SW.queue_sequence(crossing_id, 3)
 		end
 	end
 end
 
 ---Decreases the trains counter in the given crossing's rundata by `1` and
----calls the crossing's opening routine if no more trains are approaching.
+---queues the crossing's opening sequence if no more trains are approaching.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.open(crossing_id)
 	if UTILS.update_and_get_trains(crossing_id, -1) <= 0 then
-		SW.queue_routine(crossing_id, 1)
+		SW.queue_sequence(crossing_id, 1)
 		SW.crossings[crossing_id].rundata.overall = 0
 	end
 end
@@ -258,20 +259,20 @@ function UTILS.update_and_get_trains(crossing_id, step)
 	return crossing.rundata.trains
 end
 
----Works through a crossing's routine queue.
+---Works through a crossing's sequence queue.
 ---
----Until the queue is cleared, the steps of the routine at queue index `1` are
+---Until the queue is cleared, the steps of the sequence at queue index `1` are
 ---executed in order. If the crossing was paused in between, execution is
 ---resumed at the step after the responsible wait command. If one of the
 ---executed commands returns `false` (currently just the wait command), the
----process is stopped. Otherwise, routines are completely worked through one
+---process is stopped. Otherwise, sequences are completely worked through one
 ---after another until the queue is completely cleared.
 ---@param crossing_id integer|string: ID of the target crossing.
 ---@return boolean: `true` if the queue got wholly cleared, otherwise `false`.
 function UTILS.process_queue(crossing_id)
 	local crossing = SW.crossings[crossing_id]
 	while #crossing.rundata.queue > 0 do
-		local active = crossing.routines[crossing.rundata.queue[1]]
+		local active = crossing.sequences[crossing.rundata.queue[1]]
 		for i = crossing.rundata.step, #active do
 			crossing.rundata.step = i + 1
 			if i == #active then
@@ -286,12 +287,12 @@ function UTILS.process_queue(crossing_id)
 	return true
 end
 
----Adds a routine to a crossing's routine queue, also adding the crossing to
+---Adds a sequence to a crossing's sequence queue, also adding the crossing to
 ---the observation list if necessary.
 ---@param crossing_id integer|string: ID of the target crossing.
----@param routine_id integer: ID of the desired routine.
-function SW.queue_routine(crossing_id, routine_id)
-	table.insert(SW.crossings[crossing_id].rundata.queue, routine_id)
+---@param sequence_id integer: ID of the desired sequence.
+function SW.queue_sequence(crossing_id, sequence_id)
+	table.insert(SW.crossings[crossing_id].rundata.queue, sequence_id)
 	UTILS.save_rundata(crossing_id)
 	if not UTILS.array_contains(SW.observe, crossing_id) then
 		table.insert(SW.observe, crossing_id)
@@ -304,13 +305,13 @@ end
 ---Description of the save format.
 local SAVE_FORMAT = {
 	version = 1,
-	trains = 2,	-- Index of the trains counter.
-	sleep = 3,	-- Index of the sleep counter.
-	step = 4,	-- Index of the number of the next step to execute.
-	queue = 5,	-- Index of the routine queue items.
+	trains = 2,		-- Index of the trains counter.
+	sleep = 3,		-- Index of the sleep counter.
+	step = 4,		-- Index of the number of the next step to execute.
+	queue = 5,		-- Index of the sequence queue items.
 	overall = 6,	-- Index of the total current activations tracker.
 	delimiter = ",",		-- Char separating the indices.
-	delimiter_queue = "-"	-- Char separating the routine queue items.
+	delimiter_queue = "-"	-- Char separating the sequence queue items.
 }
 
 ---Creates `Rundata` with standard values.
@@ -370,12 +371,12 @@ function UTILS.load_rundata(slot)
 		return ret
 	end
 
-	-- Extract the routine queue from the string segment
+	-- Extract the sequence queue from the string segment
 	if parts[SAVE_FORMAT.queue] ~= "" then
 		local ids = UTILS.split_string(SAVE_FORMAT.delimiter_queue,
 				parts[SAVE_FORMAT.queue])
-		for index, routine_id in pairs(ids) do
-			ret.queue[index] = tonumber(routine_id)
+		for index, sequence_id in pairs(ids) do
+			ret.queue[index] = tonumber(sequence_id)
 		end
 	end
 
