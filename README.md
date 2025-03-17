@@ -58,11 +58,6 @@ Den Kern der BÜ-Konfiguration bilden Schließ- und Öffnungsvorgang, die über
 die Funktionen `:schliessen` bzw. `oeffnen` eingestellt werden. Darin kannst
 Du mittels einer Kette von "Befehlen" detailliert beschreiben, wie diese
 Vorgänge konkret ablaufen sollen.
-
-<!-- Optional steht noch die Funktion `:doppelt`
-zur Verfügung, wenn für den Fall, dass ein zweiter Zug sich dem bereits
-geschlossenen BÜ nähert, weitere Aktionen ausgeführt werden sollen (bspw.
-Aktivierung der Leuchtschrift an einem "2 Züge"-Blinklicht). -->
 ```lua
 SW.definiere("Beispiel-Bue")
 	:speichern(1)
@@ -93,6 +88,17 @@ SW.definiere("Beispiel-Bue")
 	:doppelt(befehl1, befehl2, ...)
 ```
 
+#### Anrufschranken
+Möchtest Du einen Bahnübergang als Anrufschranke einrichten, musst Du in der
+BÜ-Definition nur die entsprechende Funktion aufrufen:
+```lua
+SW.definiere("Beispiel-Bue")
+	:speichern(1)
+	:anrufschranke()
+	:schliessen(befehl1, befehl2, ...)
+	:oeffnen(befehl1, befehl2, ...)
+```
+
 #### Beispiele
 Beispielkonfigurationen für BÜs gibt es
 [hier](https://github.com/anjo0803/schrankenwaerter/blob/main/Examples.lua)!
@@ -103,6 +109,11 @@ Um einen BÜ dann tatsächlich zu schließen und zu öffnen, müssen sich Züge
 einfach über die Funktionen `SW.schliesse(bue_id)` und `SW.oeffne(bue_id)` am
 BÜ an- bzw. abmelden Die `bue_id` entspricht dabei der zuvor von Dir gewählten
 BÜ-ID.
+
+Zur straßenseitigen Steuerung von Anrufschranken werden zusätzlich die
+Funktionen `SW.anrufen(bue_id)` und `SW.freimelden(bue_id)` benutzt. Durch sie
+kann ein Verkehrsteilnehmer die Öffnung der Schranke anfordern bzw. melden,
+dass der Übergang wieder geräumt ist.
 
 Mittels [BetterContacts](https://github.com/EEP-Benny/BetterContacts) ist es
 möglich, diese Funktionen direkt aus Kontaktpunkten heraus aufzurufen.
@@ -178,9 +189,29 @@ SW.define("Example Crossing")
 #### Commands
 Using the functions `:closing` and `:opening`, you can describe in detail how
 you want the closing and opening sequences of the respective crossing to look.
-You can also use the function `:twice` to optionally execute an additional
-sequence when a second train strikes into the already-closed crossing, for
-example to illuminate the lettering on a "2 Züge" signal.
+```lua
+SW.define("Example Crossing")
+	:save(1)
+	:closing(command1, command2, ...)
+	:opening(command1, command2, ...)
+```
+
+These functions each require a list of "commands", which will be executed one
+after another during the respective sequence. For example, you can set a signal
+or turn a sound on or off. Currently, the script provides the following
+commands:
+| Name | Effect | Parameters |
+|-|-|-|
+| `SW.signal(signal_id, position)` | Set a signal. | `signal_id`: ID of the target signal.<br>`position`: ID of the position that the signal should be set to. |
+| `SW.immo(immo_id, axis, steps)` | Moves an axis on a structure. | `immo_id`: Lua name of the target structure.<br>`axis`: Name of the axis to move.<br>`steps`: Number of steps to move the axis. |
+| `SW.sound(sound_id, turn_on)` | Turns a sound on or off. | `sound_id`: Lua name of the target sound.<br>`turn_on`: `true` to turn on the sound; `false` to turn it off. |
+| `SW.pause(cycles)` | Pauses execution of commands. | `cycles`: Number of Lua cycles to pause. One cycle is equivalent to one call of the `SW.main()` function, so if it is called with every call of the `EEPMain()` function, one cycle is 200ms. |
+
+#### Double activation
+In addition to `:closing` and `:opening`, you can optionally define a routine
+to be executed when a second train activates the already closed crossing. This
+e.g. allows for the activation of a "2 ZÜGE" display. To create such a routine,
+use the `:twice` function with commands, just as above.
 ```lua
 SW.define("Example Crossing")
 	:save(1)
@@ -189,16 +220,17 @@ SW.define("Example Crossing")
 	:twice(command1, command2, ...)
 ```
 
-These three functions each require a list of "commands", which will be executed
-one after another during the respective sequence. Examples of commands are to
-set a signal or turn a sound on or off. Currently, the script itself provides
-the following commands:
-| Name | Effect | Parameters |
-|-|-|-|
-| `SW.signal(signal_id, position)` | Set a signal. | `signal_id`: ID of the target signal.<br>`position`: ID of the position that the signal should be set to. |
-| `SW.immo(immo_id, axis, steps)` | Moves an axis on a structure. | `immo_id`: Lua name of the target structure.<br>`axis`: Name of the axis to move.<br>`steps`: Number of steps to move the axis. |
-| `SW.sound(sound_id, turn_on)` | Turns a sound on or off. | `sound_id`: Lua name of the target sound.<br>`turn_on`: `true` to turn on the sound; `false` to turn it off. |
-| `SW.pause(cycles)` | Pauses execution of commands. | `cycles`: Number of Lua cycles to pause. One cycle is equivalent to one call of the `SW.main()` function, so if it is called with every call of the `EEPMain()` function, one cycle is 200ms. |
+#### Call-only crossings
+If you want to run a crossing like a British MCB-OC type - having the barriers
+down permanently and only opening them if a road user requests it - you just
+need to chain the corresponding function during the crossing setup:
+```lua
+SW.define("Example Crossing")
+	:save(1)
+	:call_only()
+	:closing(command1, command2, ...)
+	:opening(command1, command2, ...)
+```
 
 #### Examples
 You can find example configurations for crossings
@@ -209,10 +241,15 @@ Trains can strike in and pass the crossing using the `SW.close(crossing_id)`
 and `SW.open(crossing_id)` functions. The `crossing_id` is the ID you chose
 earlier for the respective crossing.
 
-Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it should
-be possible to call these functions directly from the contact points set for
-the crossing. Alternatively, you naturally can just define another function,
-which itself calls `SW.close(crossing_id)`, and use that.
+For controlling a call-only crossing on the side of the road users, the
+`SW.call_request(crossing_id)` and `SW.call_clear(crossing_id)` functions are
+used additionally. They signal that a road user requests opening the barriers
+and that they have cleared the crossing again, respectively.
+
+Using [BetterContacts](https://github.com/EEP-Benny/BetterContacts), it is
+possible to call these functions directly from the contact points set for the
+crossing. Alternatively, you naturally can just define another function, which
+itself calls `SW.close(crossing_id)`, and use that.
 ```lua
 function close_example()
 	SW.close("Example Crossing")

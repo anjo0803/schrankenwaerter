@@ -59,10 +59,8 @@ function SW.define(id)
 		rundata = UTILS.new_rundata()
 	}
 	return {
-		call_only = function (self, active)
-			if type(active) == "boolean" then
-				SW.crossings[id].call_only = active
-			end
+		call_only = function (self)
+			SW.crossings[id].call_only = true
 			return self
 		end,
 		save = function (self, slot)
@@ -89,7 +87,7 @@ function SW.define(id)
 		end,
 
 		-- German function names
-		anrufschranke = function(self, aktiv) return self:call_only(aktiv) end,
+		anrufschranke = function(self) return self:call_only() end,
 		speichern = function(self, slot) return self:save(slot) end,
 		oeffnen = function(self, ...) return self:opening(...) end,
 		schliessen = function(self, ...) return self:closing(...) end,
