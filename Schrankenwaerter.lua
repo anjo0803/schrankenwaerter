@@ -1,5 +1,5 @@
 local SW = {
-	version = "1.2.0",
+	version = "2.0.0",
 
 	---@type RailroadCrossing[]
 	crossings = {},
@@ -97,32 +97,6 @@ function SW.define(id)
 	}
 end
 
----Initializes the script with the given set of railroad crossing definitions,
----attaching the required rundata to each. If possible, any rundata saved for
----the crossing is loaded.
----
----**Deprecated** in favour of the `SW.define` procedure!
----@param ... UserCrossing[]: List of crossings to manage.
----@deprecated
-function SW.setup(...)
-	SW.crossings = {}
-	for id, crossing in pairs(...) do
-		-- Convert the UserCrossing into a RailroadCrossing
-		local converted = {
-			slot = crossing.slot,
-			rundata = UTILS.load_rundata(crossing.slot),
-			routines = { crossing.opening, crossing.closing, nil }
-		}
-		if crossing.twice then converted.routines[3] = crossing.twice end
-
-		-- Resume queued routines
-		if #converted.rundata.queue > 0 then table.insert(SW.observe, id) end
-
-		SW.crossings[id] = converted
-	end
-	print("Schrankenwaerter ", SW.version, " set up!")
-end
-
 
 -- Crossing Actions
 
@@ -138,13 +112,6 @@ function SW.pause(duration)
 		return false
 	end
 end
-
----Pauses a crossing's active routine for the given number of Lua cycles.
----Deprecated in favour of SW.pause
----@param duration integer: Number of Lua cycles to wait.
----@return function: Function that will be called when executing the routine.
----@deprecated
-function SW.wait(duration) return SW.pause(duration) end
 
 ---Set the given signal to the given position.
 ---@param signal_id integer: ID of the target signal.
@@ -269,12 +236,6 @@ function SW.call_request(crossing_id)
 		SW.queue_sequence(crossing_id, 1)
 	end
 end
-
--- Backwards compatibility for v1.0.0
----@deprecated
-function SW.crossingClose(crossing_id) SW.close(crossing_id) end
----@deprecated
-function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 
 ---Registers that a road user has crossed the target crossing if it only opens
 ---on road user call. 
