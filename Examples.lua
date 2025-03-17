@@ -49,8 +49,8 @@ SW.define("separate_signals")
 		SW.signal(2, 1)
 	)
 
--- Zweiphasige Signale plus Immobilien (hier: Shop-Set V80NJS20083)
--- Two-phase signals plus structures (here: shop set V80NJS20083)
+-- Zweiphasige Signale, Immobilien, Reversieren (hier: Shop-Set V80NJS20083)
+-- Two-phase signals, structures, reversing (here: shop set V80NJS20083)
 SW.define("wssb")
 	:save(2)
 	:closing(
@@ -76,6 +76,10 @@ SW.define("wssb")
 		SW.signal(2, 1),
 		SW.immo("#1_WSSB_Andreaskreuz2", "Licht", -100),
 		SW.immo("#2_WSSB_Andreaskreuz2", "Licht", -100)
+	)
+	:reverse(
+		SW.signal(1, 3),
+		SW.signal(2, 3)
 	)
 
 --[[

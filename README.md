@@ -82,10 +82,22 @@ verwirklichen. Ein solcher Vorgang wird über die Funktion `:doppelt` definiert,
 wobei wie bei Schließ- und Öffnungsvorgang Befehle benutzt werden:
 ```lua
 SW.definiere("Beispiel-Bue")
-	:speichern(1)
 	:schliessen(befehl1, befehl2, ...)
 	:oeffnen(befehl1, befehl2, ...)
 	:doppelt(befehl1, befehl2, ...)
+```
+
+#### Reversieren
+Wird ein BÜ von einem neuen Zug erneut eingeschaltet, während der
+Öffnungsvorgang noch läuft, führt er diesen normalerweise zunächst vollständig
+durch und beginnt danach erst den üblichen Schließvorgang. Soll er stattdessen
+den Öffnungsvorgang reversieren (wie es z.B. WSSB-Anlagen tun), kannst Du dafür
+mit der Funktion `:reversieren` einen speziellen Vorgang beschreiben:
+```lua
+SW.definiere("Beispiel-Bue")
+	:schliessen(befehl1, befehl2, ...)
+	:oeffnen(befehl1, befehl2, ...)
+	:reversieren(befehl1, befehl2, ...)
 ```
 
 #### Anrufschranken
@@ -93,7 +105,6 @@ Möchtest Du einen Bahnübergang als Anrufschranke einrichten, musst Du in der
 BÜ-Definition nur die entsprechende Funktion aufrufen:
 ```lua
 SW.definiere("Beispiel-Bue")
-	:speichern(1)
 	:anrufschranke()
 	:schliessen(befehl1, befehl2, ...)
 	:oeffnen(befehl1, befehl2, ...)
@@ -186,7 +197,7 @@ SW.define("Example Crossing")
 	:save(1)
 ```
 
-#### Commands
+#### Opening and closing sequences
 Using the functions `:closing` and `:opening`, you can describe in detail how
 you want the closing and opening sequences of the respective crossing to look.
 ```lua
@@ -214,10 +225,21 @@ e.g. allows for the activation of a "2 ZÜGE" display. To create such a routine,
 use the `:twice` function with commands, just as above.
 ```lua
 SW.define("Example Crossing")
-	:save(1)
 	:closing(command1, command2, ...)
 	:opening(command1, command2, ...)
 	:twice(command1, command2, ...)
+```
+
+#### Reversing
+When a crossing is activated again by another train while the opening sequence
+is still ongoing, it normally finishes the opening and only thereafter starts
+the usual closing sequence. If you want it to stop opening and reverse instead,
+use the `:reverse` function to describe the sequence you would like to happen:
+```lua
+SW.define("Example Crossing")
+	:closing(command1, command2, ...)
+	:opening(command1, command2, ...)
+	:reverse(command1, command2, ...)
 ```
 
 #### Call-only crossings
@@ -226,7 +248,6 @@ down permanently and only opening them if a road user requests it - you just
 need to chain the corresponding function during the crossing setup:
 ```lua
 SW.define("Example Crossing")
-	:save(1)
 	:call_only()
 	:closing(command1, command2, ...)
 	:opening(command1, command2, ...)
