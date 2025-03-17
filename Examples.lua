@@ -26,15 +26,6 @@ SW.define("simple")
 SW.define("separate_signals")
 	:save(1)	-- Zuweisen eines Save-Slots // Assigning a save slot
 	:closing(
-		-- Benutzen Sie einen pause-Befehl am Anfang der Schließroutine, um
-		-- eine Mindestgrünzeit zu etablieren. So wird bspw. auch ein "Zucken"
-		-- der Schranken zu vermieden, wenn innerhalb des Öffnungsvorganges ein
-		-- neuer Zug den BÜ schließt.
-		-- Use a pause command at the beginning of the closing routine to
-		-- establish a minimum time the crossing stays open. This also avoids
-		-- the barriers "twitching" when a new train closes the crossing while
-		-- it is still opening.
-		SW.pause(15),
 		SW.signal(1, 2),	-- Zuerst wird das Lichtzeichen geschaltet
 		SW.signal(2, 2),	-- First, the lights are set
 		SW.pause(25),		-- Warte 5 Sekunden // wait 5 seconds
@@ -46,7 +37,17 @@ SW.define("separate_signals")
 		SW.signal(4, 1),
 		SW.pause(10),
 		SW.signal(1, 1),
-		SW.signal(2, 1)
+		SW.signal(2, 1),
+		--[[
+		Benutze einen pause-Befehl am Ende des Öffnungsvorgangs, um eine
+		Mindestgrünzeit zu forcieren. So wird bspw. auch ein "Zucken" der
+		Schranken vermieden, wenn innerhalb des Öffnungsvorganges ein neuer Zug
+		den BÜ schließt.
+		Use a pause command at the end of the opening sequence to force a
+		minimum time for the crossing to stay open. This also avoids the
+		barriers "twitching" when a new train closes the crossing while it is
+		still opening. ]]
+		SW.pause(15)
 	)
 
 -- Zweiphasige Signale, Immobilien, Reversieren (hier: Shop-Set V80NJS20083)
@@ -54,7 +55,6 @@ SW.define("separate_signals")
 SW.define("wssb")
 	:save(2)
 	:closing(
-		SW.pause(50),
 		SW.signal(1, 2),
 		SW.signal(2, 2),
 		SW.immo("#1_WSSB_Andreaskreuz2", "Licht", 100),
