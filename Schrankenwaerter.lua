@@ -18,6 +18,7 @@ local UTILS = {}
 ---@field opening function: 
 ---@field closing function: 
 ---@field twice function: 
+---@field call_only function: 
 
 ---Represents the blueprint of a railroad crossing with user-defined
 ---functionality. Used exclusively during setup by passing it to the `SW.setup`
@@ -30,8 +31,8 @@ local UTILS = {}
 
 ---Represents a railroad crossing.
 ---@class RailroadCrossing
----@field routines function[][]: List of the crossing's routines.
 ---@field slot? integer: ID of the EEP save slot for the crossing.
+---@field call_only boolean: Whether the crossing opens on road user call only.
 ---@field sequences function[][]: List of the crossing's sequences.
 ---@field rundata Rundata: Current state of the crossing.
 
@@ -42,6 +43,7 @@ local UTILS = {}
 ---@field queue integer[]: IDs of the currently-queued sequences.
 ---@field step integer: ID of the next step to execute in the active sequence.
 ---@field overall integer: Total number of trains that approached in the active closure.
+---@field called integer: Number of road users waiting to cross the call-only crossing.
 
 -- Crossing Config
 
@@ -51,11 +53,18 @@ local UTILS = {}
 ---@return CrossingDefiner: Crossing object.
 function SW.define(id)
 	SW.crossings[id] = {
+		call_only = false,
 		slot = nil,
 		sequences = { nil, nil, nil },
 		rundata = UTILS.new_rundata()
 	}
 	return {
+		call_only = function (self, active)
+			if type(active) == "boolean" then
+				SW.crossings[id].call_only = active
+			end
+			return self
+		end,
 		save = function (self, slot)
 			SW.crossings[id].slot = slot
 
@@ -80,6 +89,7 @@ function SW.define(id)
 		end,
 
 		-- German function names
+		anrufschranke = function(self, aktiv) return self:call_only(aktiv) end,
 		speichern = function(self, slot) return self:save(slot) end,
 		oeffnen = function(self, ...) return self:opening(...) end,
 		schliessen = function(self, ...) return self:closing(...) end,
@@ -206,11 +216,18 @@ end
 ---Increases the trains counter in the given crossing's rundata by `1` and
 ---queues the crossing's closing sequence if no other train is also approaching
 ---already. If the crossing is already closed but has a double-activation
----sequence defined, that one is queued for the second train to approach.
+---sequence defined, that one is queued for the second train to approach. If
+---the crossing opens on road user call only, no sequences are queued.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.close(crossing_id)
 	local crossing = SW.crossings[crossing_id]
 	crossing.rundata.overall = crossing.rundata.overall + 1
+
+	if crossing.call_only then
+		UTILS.update_and_get_trains(crossing_id, 1)
+		return
+	end
+
 	if UTILS.update_and_get_trains(crossing_id, 1) == 1 then
 		SW.queue_sequence(crossing_id, 2)
 		return
@@ -225,11 +242,31 @@ end
 
 ---Decreases the trains counter in the given crossing's rundata by `1` and
 ---queues the crossing's opening sequence if no more trains are approaching.
+---If the crossing opens on road user call only, the opening sequence is only
+---queued if a road user's call is still being held.
 ---@param crossing_id integer|string: ID of the target crossing.
 function SW.open(crossing_id)
+	local crossing = SW.crossings[crossing_id]
+
 	if UTILS.update_and_get_trains(crossing_id, -1) <= 0 then
+		crossing.rundata.overall = 0
+		if not crossing.call_only or (crossing.rundata.called > 0) then
+			SW.queue_sequence(crossing_id, 1)
+		end
+	end
+end
+
+---Registers a request to open the crossing if it only opens on road user call.
+---If no trains are approaching the crossing, its opening sequence is queued
+---immediately; otherwise, it is queued once no more trains are approaching.
+---@param crossing_id integer|string: ID of the target crossing.
+function SW.call_request(crossing_id)
+	local crossing = SW.crossings[crossing_id]
+	if not crossing.call_only then return end
+
+	if UTILS.update_and_get_callers(crossing_id, 1) == 1
+			and crossing.rundata.trains == 0 then
 		SW.queue_sequence(crossing_id, 1)
-		SW.crossings[crossing_id].rundata.overall = 0
 	end
 end
 
@@ -239,10 +276,24 @@ function SW.crossingClose(crossing_id) SW.close(crossing_id) end
 ---@deprecated
 function SW.crossingOpen(crossing_id) SW.open(crossing_id) end
 
+---Registers that a road user has crossed the target crossing if it only opens
+---on road user call. 
+---@param crossing_id integer|string: ID of the target crossing.
+function SW.call_clear(crossing_id)
+	local crossing = SW.crossings[crossing_id]
+	if not crossing.call_only then return end
+
+	if UTILS.update_and_get_callers(crossing_id, -1) <= 0 then
+		SW.queue_sequence(crossing_id, 2)
+	end
+end
+
 -- German function names
 function SW.definiere(id) return SW.define(id) end
 function SW.schliesse(bue_id) SW.close(bue_id) end
 function SW.oeffne(bue_id) SW.open(bue_id) end
+function SW.anrufen(bue_id) SW.call_request(bue_id) end
+function SW.freimelden(bue_id) SW.call_clear(bue_id) end
 
 ---Adds the given number to the trains counter of the given crossing and tries
 ---to save the thusly updated rundata.
@@ -257,6 +308,21 @@ function UTILS.update_and_get_trains(crossing_id, step)
 	UTILS.save_rundata(crossing_id)
 
 	return crossing.rundata.trains
+end
+
+---Adds the given number to the waiting road users counter of the given
+---call-only crossing and tries to save the thusly updated rundata.
+---@param crossing_id integer|string: ID of the target crossing.
+---@param step 1 | -1: Number to add to the waiting road users counter.
+---@return integer: The updated waiting road users counter of the crossing.
+function UTILS.update_and_get_callers(crossing_id, step)
+	local crossing = SW.crossings[crossing_id]
+	crossing.rundata.called = crossing.rundata.called + step
+	if crossing.rundata.called < 0 then crossing.rundata.called = 0 end
+
+	UTILS.save_rundata(crossing_id)
+
+	return crossing.rundata.called
 end
 
 ---Works through a crossing's sequence queue.
@@ -310,6 +376,7 @@ local SAVE_FORMAT = {
 	step = 4,		-- Index of the number of the next step to execute.
 	queue = 5,		-- Index of the sequence queue items.
 	overall = 6,	-- Index of the total current activations tracker.
+	called = 7,		-- Index of the call holding indicator.
 	delimiter = ",",		-- Char separating the indices.
 	delimiter_queue = "-"	-- Char separating the sequence queue items.
 }
@@ -322,7 +389,8 @@ function UTILS.new_rundata()
 		sleep = 0,
 		step = 1,
 		trains = 0,
-		overall = 0
+		overall = 0,
+		called = 0
 	}
 end
 
@@ -343,7 +411,8 @@ function UTILS.save_rundata(crossing_id)
 		[SAVE_FORMAT.step] = rundata.step,
 		[SAVE_FORMAT.queue] = table.concat(rundata.queue,
 				SAVE_FORMAT.delimiter_queue),
-		[SAVE_FORMAT.overall] = rundata.overall
+		[SAVE_FORMAT.overall] = rundata.overall,
+		[SAVE_FORMAT.called] = rundata.called
 	}
 	EEPSaveData(crossing.slot, table.concat(to_save, SAVE_FORMAT.delimiter))
 end
@@ -385,6 +454,7 @@ function UTILS.load_rundata(slot)
 	ret.sleep = tonumber(parts[SAVE_FORMAT.sleep]) or 0
 	ret.step = tonumber(parts[SAVE_FORMAT.step]) or 1
 	ret.overall = tonumber(parts[SAVE_FORMAT.overall]) or 0
+	ret.called = tonumber(parts[SAVE_FORMAT.called]) or 0
 	return ret
 end
 
