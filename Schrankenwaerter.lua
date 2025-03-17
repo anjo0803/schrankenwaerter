@@ -55,7 +55,7 @@ function SW.define(id)
 	SW.crossings[id] = {
 		call_only = false,
 		slot = nil,
-		sequences = { nil, nil, nil },
+		sequences = { nil, nil, nil, nil },
 		rundata = UTILS.new_rundata()
 	}
 	return {
@@ -85,13 +85,18 @@ function SW.define(id)
 			SW.crossings[id].sequences[3] = {...}
 			return self
 		end,
+		reverse = function (self, ...)
+			SW.crossings[id].sequences[4] = {...}
+			return self
+		end,
 
 		-- German function names
 		anrufschranke = function(self) return self:call_only() end,
 		speichern = function(self, slot) return self:save(slot) end,
 		oeffnen = function(self, ...) return self:opening(...) end,
 		schliessen = function(self, ...) return self:closing(...) end,
-		doppelt = function(self, ...) return self:twice(...) end
+		doppelt = function(self, ...) return self:twice(...) end,
+		reversieren = function (self, ...) return self:reverse(...) end
 	}
 end
 
@@ -194,7 +199,11 @@ function SW.close(crossing_id)
 	end
 
 	if UTILS.update_and_get_trains(crossing_id, 1) == 1 then
-		SW.queue_sequence(crossing_id, 2)
+		if crossing.sequences[4] ~= nil and #crossing.rundata.queue > 0 then
+			SW.force_sequence(crossing_id, 4)
+		else
+			SW.queue_sequence(crossing_id, 2)
+		end
 		return
 	end
 
@@ -322,6 +331,22 @@ function SW.queue_sequence(crossing_id, sequence_id)
 	if not UTILS.array_contains(SW.observe, crossing_id) then
 		table.insert(SW.observe, crossing_id)
 	end
+end
+
+---Clears a crossing's sequence queue and inserts a given sequence instead.
+---@param crossing_id integer|string: ID of the target crossing.
+---@param sequence_id integer: ID of the desired sequence.
+function SW.force_sequence(crossing_id, sequence_id)
+	local rundata = SW.crossings[crossing_id].rundata
+	for i = 1, #rundata.queue do
+		if rundata.queue[i] ~= sequence_id then
+			table.remove(rundata.queue, i)
+			i = i - 1
+		end
+	end
+	rundata.sleep = 0
+	rundata.step = 1
+	SW.queue_sequence(crossing_id, sequence_id)
 end
 
 
