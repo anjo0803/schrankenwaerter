@@ -297,8 +297,8 @@ end
 ---
 ---Until the queue is cleared, the steps of the sequence at queue index `1` are
 ---executed in order. If the crossing was paused in between, execution is
----resumed at the step after the responsible wait command. If one of the
----executed commands returns `false` (currently just the wait command), the
+---resumed at the step after the responsible pause action. If one of the
+---executed actions returns `false` (currently just the pause action), the
 ---process is stopped. Otherwise, sequences are completely worked through one
 ---after another until the queue is completely cleared.
 ---@param crossing_id integer|string: ID of the target crossing.

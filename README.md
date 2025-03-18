@@ -56,35 +56,35 @@ SW.definiere("Beispiel-Bue")
 #### Schließ- und Öffnungsvorgang
 Den Kern der BÜ-Konfiguration bilden Schließ- und Öffnungsvorgang, die über
 die Funktionen `:schliessen` bzw. `oeffnen` eingestellt werden. Darin kannst
-Du mittels einer Kette von "Befehlen" detailliert beschreiben, wie diese
+Du mittels einer Kette von "Aktionen" detailliert beschreiben, wie diese
 Vorgänge konkret ablaufen sollen.
 ```lua
 SW.definiere("Beispiel-Bue")
 	:speichern(1)
-	:schliessen(befehl1, befehl2, ...)
-	:oeffnen(befehl1, befehl2, ...)
+	:schliessen(aktion1, aktion2, ...)
+	:oeffnen(aktion1, aktion2, ...)
 ```
 
-Die angegebenen Befehle werden während des jeweiligen Vorgangs nacheinander
-abgearbeitet. Momentan stehen folgende Befehle zur Verfügung:
+Die angegebenen Aktionen werden während des jeweiligen Vorgangs nacheinander
+abgearbeitet. Momentan stehen folgende Aktionen zur Verfügung:
 | Name | Effekt | Parameter |
 |-|-|-|
 | `SW.signal(signal_id, stellung)` | Setzt ein Signal in eine Stellung. | `signal_id`: ID des Signals, das gesetzt werden soll.<br>`stellung`: ID der Stellung, in die das Signal gesetzt werden soll. |
 | `SW.immo(immo_id, achse, schritte)` | Bewegt eine Achse an einer Immobilie. | `immo_id`: Lua-Name der Ziel-Immobilie.<br>`achse`: Name der zu bewegenden Achse.<br>`schritte`: Anzahl der Schritte, die die Achse bewegt werden soll. |
 | `SW.sound(sound_id, anschalten)` | Schaltet einen Sound an oder aus. | `sound_id`: Lua-Name des Ziel-Sounds.<br>`anschalten`: `true`, um den Sound anzuschalten; `false`, um ihn auszuschalten. |
-| `SW.pause(zyklen)` | Pausiert die Befehlsausführung. | `zyklen`: Anzahl der Lua-Zyklen, für die die Ausführung ruhen soll. Ein Zyklus entspricht einem Aufruf der `SW.main()`-Funktion, d.h. wenn diese in jedem Aufruf der `EEPMain()`-Funktion aufgerufen wird, dauert jeder Zyklus 200ms. |
+| `SW.pause(zyklen)` | Pausiert die Aktionsausführung. | `zyklen`: Anzahl der Lua-Zyklen, für die die Ausführung ruhen soll. Ein Zyklus entspricht einem Aufruf der `SW.main()`-Funktion, d.h. wenn diese in jedem Aufruf der `EEPMain()`-Funktion aufgerufen wird, dauert jeder Zyklus 200ms. |
 
 #### Doppelaktivierung
 Neben `:schliessen` und `:oeffnen` lässt sich optional ein Vorgang definieren,
 der ausgeführt werden soll, wenn ein zweiter Zug sich am bereits geschlossenen
 BÜ anmeldet. So lässt sich bspw. die Aktivierung einer "2 ZÜGE"-Leuchtschrift
 verwirklichen. Ein solcher Vorgang wird über die Funktion `:doppelt` definiert,
-wobei wie bei Schließ- und Öffnungsvorgang Befehle benutzt werden:
+wobei wie bei Schließ- und Öffnungsvorgang Aktionen benutzt werden:
 ```lua
 SW.definiere("Beispiel-Bue")
-	:schliessen(befehl1, befehl2, ...)
-	:oeffnen(befehl1, befehl2, ...)
-	:doppelt(befehl1, befehl2, ...)
+	:schliessen(aktion1, aktion2, ...)
+	:oeffnen(aktion1, aktion2, ...)
+	:doppelt(aktion1, aktion2, ...)
 ```
 
 #### Reversieren
@@ -95,9 +95,9 @@ den Öffnungsvorgang reversieren (wie es z.B. WSSB-Anlagen tun), kannst Du dafü
 mit der Funktion `:reversieren` einen speziellen Vorgang beschreiben:
 ```lua
 SW.definiere("Beispiel-Bue")
-	:schliessen(befehl1, befehl2, ...)
-	:oeffnen(befehl1, befehl2, ...)
-	:reversieren(befehl1, befehl2, ...)
+	:schliessen(aktion1, aktion2, ...)
+	:oeffnen(aktion1, aktion2, ...)
+	:reversieren(aktion1, aktion2, ...)
 ```
 
 #### Anrufschranken
@@ -106,8 +106,8 @@ BÜ-Definition nur die entsprechende Funktion aufrufen:
 ```lua
 SW.definiere("Beispiel-Bue")
 	:anrufschranke()
-	:schliessen(befehl1, befehl2, ...)
-	:oeffnen(befehl1, befehl2, ...)
+	:schliessen(aktion1, aktion2, ...)
+	:oeffnen(aktion1, aktion2, ...)
 ```
 
 #### Beispiele
@@ -203,31 +203,31 @@ you want the closing and opening sequences of the respective crossing to look.
 ```lua
 SW.define("Example Crossing")
 	:save(1)
-	:closing(command1, command2, ...)
-	:opening(command1, command2, ...)
+	:closing(action1, action2, ...)
+	:opening(action1, action2, ...)
 ```
 
-These functions each require a list of "commands", which will be executed one
+These functions each require a list of "actions", which will be executed one
 after another during the respective sequence. For example, you can set a signal
 or turn a sound on or off. Currently, the script provides the following
-commands:
+actions:
 | Name | Effect | Parameters |
 |-|-|-|
 | `SW.signal(signal_id, position)` | Set a signal. | `signal_id`: ID of the target signal.<br>`position`: ID of the position that the signal should be set to. |
 | `SW.immo(immo_id, axis, steps)` | Moves an axis on a structure. | `immo_id`: Lua name of the target structure.<br>`axis`: Name of the axis to move.<br>`steps`: Number of steps to move the axis. |
 | `SW.sound(sound_id, turn_on)` | Turns a sound on or off. | `sound_id`: Lua name of the target sound.<br>`turn_on`: `true` to turn on the sound; `false` to turn it off. |
-| `SW.pause(cycles)` | Pauses execution of commands. | `cycles`: Number of Lua cycles to pause. One cycle is equivalent to one call of the `SW.main()` function, so if it is called with every call of the `EEPMain()` function, one cycle is 200ms. |
+| `SW.pause(cycles)` | Pauses execution of actions. | `cycles`: Number of Lua cycles to pause. One cycle is equivalent to one call of the `SW.main()` function, so if it is called with every call of the `EEPMain()` function, one cycle is 200ms. |
 
 #### Double activation
 In addition to `:closing` and `:opening`, you can optionally define a routine
 to be executed when a second train activates the already closed crossing. This
 e.g. allows for the activation of a "2 ZÜGE" display. To create such a routine,
-use the `:twice` function with commands, just as above.
+use the `:twice` function with actions, just as above.
 ```lua
 SW.define("Example Crossing")
-	:closing(command1, command2, ...)
-	:opening(command1, command2, ...)
-	:twice(command1, command2, ...)
+	:closing(action1, action2, ...)
+	:opening(action1, action2, ...)
+	:twice(action1, action2, ...)
 ```
 
 #### Reversing
@@ -237,9 +237,9 @@ the usual closing sequence. If you want it to stop opening and reverse instead,
 use the `:reverse` function to describe the sequence you would like to happen:
 ```lua
 SW.define("Example Crossing")
-	:closing(command1, command2, ...)
-	:opening(command1, command2, ...)
-	:reverse(command1, command2, ...)
+	:closing(action1, action2, ...)
+	:opening(action1, action2, ...)
+	:reverse(action1, action2, ...)
 ```
 
 #### Call-only crossings
@@ -249,8 +249,8 @@ need to chain the corresponding function during the crossing setup:
 ```lua
 SW.define("Example Crossing")
 	:call_only()
-	:closing(command1, command2, ...)
-	:opening(command1, command2, ...)
+	:closing(action1, action2, ...)
+	:opening(action1, action2, ...)
 ```
 
 #### Examples
